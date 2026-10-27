@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pracownia UML</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #ffffff; --text: #1d2330; --muted: #667085; --line: #e3e6eb;
+    --accent: #2f6fde; --ok: #1a8f4e; --cur: #eef4ff; --err: #c0362c;
+    --code-bg: #12151c; --code-text: #d7dce5; --canvas: #eceef2;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #0d1016; --panel: #161a22; --text: #e2e6ee; --muted: #8b94a5; --line: #262c38; --accent: #6ea2ff; --ok: #4cc38a; --cur: #1b2436; --err: #ff9b9b; --canvas: #0d1016; color-scheme: dark; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; height: 100vh; display: flex; flex-direction: column; }
+  header { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--panel); }
+  header h1 { font-size: 17px; margin: 0; flex: 1; }
+  header small { color: var(--muted); font-weight: normal; }
+  button { font: inherit; font-size: 13px; border: 1px solid var(--line); background: var(--panel); color: var(--text); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+  button:hover { border-color: var(--accent); }
+  a { color: var(--accent); }
+  main { flex: 1; display: grid; grid-template-columns: 360px 1fr 240px; min-height: 0; }
+  aside, #model { background: var(--panel); overflow-y: auto; padding: 14px 16px; }
+  aside { border-right: 1px solid var(--line); }
+  #model { border-left: 1px solid var(--line); font-size: 13px; }
+  select { width: 100%; font: inherit; padding: 6px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); color: var(--text); }
+  .intro { color: var(--muted); font-size: 14px; margin: 10px 0 14px; }
+  .intro b { color: var(--text); }
+  ol { padding: 0; margin: 0; list-style: none; counter-reset: s; }
+  li.step { counter-increment: s; padding: 8px 10px 8px 34px; border-radius: 8px; position: relative; margin-bottom: 4px; font-size: 14px; opacity: .55; }
+  li.step::before { content: counter(s); position: absolute; left: 8px; top: 8px; width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--muted); font-size: 11px; text-align: center; line-height: 17px; }
+  li.step.done { opacity: .75; }
+  li.step.done::before { content: "✓"; background: var(--ok); border-color: var(--ok); color: #fff; }
+  li.step.cur { opacity: 1; background: var(--cur); outline: 1px solid var(--accent); }
+  li.step.cur::before { border-color: var(--accent); color: var(--accent); }
+  li.step.flash { animation: flash .6s; }
+  @keyframes flash { from { background: color-mix(in srgb, var(--ok) 30%, transparent); } }
+  code { font: 13px ui-monospace, Menlo, Consolas, monospace; background: color-mix(in srgb, var(--accent) 12%, transparent); padding: 1px 4px; border-radius: 4px; word-break: break-word; }
+  li.step code { cursor: pointer; }
+  li.step code:hover { outline: 1px solid var(--accent); }
+  li.step pre { font: 12.5px/1.45 ui-monospace, Menlo, Consolas, monospace; background: var(--code-bg); color: var(--code-text); padding: 8px 10px; border-radius: 6px; overflow-x: auto; cursor: copy; margin: 6px 0 2px; position: relative; }
+  li.step pre:hover::after { content: "kliknij, aby wstawić"; position: absolute; top: 4px; right: 8px; font-size: 11px; color: var(--muted); }
+  li.step.has-q { padding-right: 32px; }
+  .q { position: absolute; top: 7px; right: 6px; width: 20px; height: 20px; padding: 0; border-radius: 50%; font-size: 12px; font-weight: 600; color: var(--accent); }
+  .why { margin-top: 6px; padding: 6px 8px; border-left: 2px solid var(--accent); font-size: 13px; }
+  .why div { margin: 2px 0; } .why p { margin: 4px 0 0; color: var(--muted); }
+  .why code { cursor: default; }
+  .hint { font-size: 13px; color: var(--muted); }
+  .hint button { font-size: 12px; padding: 1px 6px; }
+  .done-box { margin-top: 12px; padding: 10px; border-radius: 8px; background: color-mix(in srgb, var(--ok) 15%, transparent); }
+  #work { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+  #code { height: 38%; min-height: 140px; resize: vertical; background: var(--code-bg); color: var(--code-text); font: 14px/1.5 ui-monospace, Menlo, Consolas, monospace; padding: 12px 14px; border: 0; outline: 0; tab-size: 2; caret-color: #7ee787; }
+  #errs { font: 13px ui-monospace, Menlo, Consolas, monospace; color: var(--err); background: var(--panel); border-bottom: 1px solid var(--line); padding: 0 14px; }
+  #errs div { padding: 3px 0; }
+  #bar { display: flex; gap: 8px; padding: 8px 14px; background: var(--panel); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  #bar span { flex: 1; color: var(--muted); font-size: 13px; align-self: center; }
+  #canvas { flex: 1; overflow: auto; background: var(--canvas); padding: 16px; }
+  #canvas svg { display: block; background: #fff; border-radius: 4px; box-shadow: 0 1px 3px rgb(0 0 0 / .15); max-width: none; }
+  #canvas .empty { color: var(--muted); }
+  #model h2 { font: 600 12px system-ui, sans-serif; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 0 0 4px; }
+  #model > p { color: var(--muted); margin: 0 0 10px; }
+  #model h3 { font-size: 13px; margin: 12px 0 4px; }
+  #model ul { list-style: none; margin: 0; padding: 0; }
+  #model li { padding: 2px 0; }
+  #model .k { color: var(--muted); font-size: 12px; }
+  @media (max-width: 900px) {
+    body { height: auto; }
+    main { grid-template-columns: 1fr; }
+    #work { order: -1; }
+    #code { height: 40vh; }
+    #canvas { min-height: 50vh; }
+    aside, #model { border: 0; border-top: 1px solid var(--line); }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Pracownia UML <small>· Human-Computer Interaction</small></h1>
+  <button id="reset">Zacznij od nowa</button>
+</header>
+<main>
+  <aside>
+    <select id="lesson" aria-label="lekcja"></select>
+    <p class="intro" id="intro"></p>
+    <ol id="steps"></ol>
+    <div id="donebox"></div>
+  </aside>
+  <section id="work">
+    <textarea id="code" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="kod diagramu"></textarea>
+    <div id="errs"></div>
+    <div id="bar"><span id="status"></span><button id="restart">Przywróć kod startowy</button><button id="copy">Kopiuj kod</button><button id="svg">Pobierz SVG</button></div>
+    <div id="canvas"></div>
+  </section>
+  <div id="model"><h2>Model</h2><p>Tak edytor zrozumiał kod.</p><div id="tree"></div></div>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dagre/0.8.5/dagre.min.js"></script>
+<script src="uml.js"></script>
+<script src="lessons.js"></script>
+<script>
+const KEY = 'uml-practice-v1';
+let saved = {};
+try { saved = JSON.parse(localStorage.getItem(KEY)) || {}; } catch {}
+const progress = saved.progress || {}, texts = saved.texts || {};
+let active = Math.min(saved.active || 0, LESSONS.length - 1), model, timer;
+const $ = id => document.getElementById(id);
+const code = $('code');
+const lesson = () => LESSONS[active];
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify({ progress, texts, active })); } catch {} };
+
+function renderLesson(flashIdx) {
+  const L = lesson(), done = progress[L.id] || 0;
+  $('lesson').innerHTML = LESSONS.map((l, i) => `<option value="${i}" ${i === active ? 'selected' : ''}>${l.title} (${Math.min(progress[l.id] || 0, l.steps.length)}/${l.steps.length})</option>`).join('');
+  $('intro').innerHTML = L.intro;
+  $('steps').innerHTML = L.steps.map((s, i) => `<li class="step ${i < done ? 'done' : i === done ? 'cur' : ''} ${i === flashIdx ? 'flash' : ''} ${s.why ? 'has-q' : ''}">${s.do}${s.why ? `<button class="q" title="Co oznacza ten zapis?">?</button><div class="why" hidden>${s.why}</div>` : ''}${s.hint && i === done ? ` <span class="hint"><button data-hint="${esc(s.hint).replace(/"/g, '&quot;')}">podpowiedź</button></span>` : ''}</li>`).join('');
+  const next = LESSONS[active + 1];
+  $('donebox').innerHTML = done >= L.steps.length ? `<div class="done-box">Lekcja ukończona. ${next ? `<button id="next">Dalej: ${next.title} →</button>` : 'Na razie to wszystko.'}</div>` : '';
+  if (next && done >= L.steps.length) $('next').onclick = () => { active++; save(); load(); };
+  $('steps').querySelector('.cur')?.scrollIntoView({ block: 'nearest' });
+}
+
+const KIND = { association: 'asocjacja', generalization: 'generalizacja', realization: 'realizacja', composition: 'kompozycja', aggregation: 'agregacja', dependency: 'zależność', include: '«include»', extend: '«extend»' };
+const GROUP = { actor: 'Aktorzy', usecase: 'Przypadki użycia', rect: 'Granice systemu', class: 'Klasy', abstract: 'Klasy abstrakcyjne', interface: 'Interfejsy', enum: 'Wyliczenia' };
+function renderModel() {
+  const name = k => esc(model.els.find(e => e.key === k).label);
+  const end = (k, mu) => name(k) + (mu ? ` <span class="k">[${esc(mu)}]</span>` : '');
+  const groups = Object.keys(GROUP).map(t => {
+    const els = model.els.filter(e => e.type === t);
+    if (!els.length) return '';
+    return `<h3>${GROUP[t]}</h3><ul>${els.map(e => `<li>${esc(e.label)}${t === 'usecase' && !e.parent ? ' <span class="k">poza granicą systemu</span>' : ''}${['class', 'abstract', 'interface'].includes(t) ? ` <span class="k">atr. ${e.attrs.length}, op. ${e.ops.length}</span>` : ''}${t === 'enum' ? ` <span class="k">${e.attrs.map(a => esc(a.name)).join(', ')}</span>` : ''}</li>`).join('')}</ul>`;
+  });
+  const rels = model.rels.map(r => {
+    const d = r.kind === 'association' ? `${end(r.a, r.aMult)} ${r.nav ? '→' : '—'} ${end(r.b, r.bMult)}`
+      : r.kind === 'composition' || r.kind === 'aggregation' ? `całość ${end(r.to, r.toMult)}, część ${end(r.from, r.fromMult)}`
+      : r.kind === 'generalization' ? `${name(r.from)} dziedziczy po: ${name(r.to)}`
+      : r.kind === 'realization' ? `${name(r.from)} realizuje ${name(r.to)}`
+      : r.kind === 'include' ? `${name(r.from)} zawsze wykonuje ${name(r.to)}`
+      : r.kind === 'extend' ? `${name(r.from)} czasem rozszerza ${name(r.to)}`
+      : `${name(r.from)} używa ${name(r.to)}`;
+    return `<li><span class="k">${KIND[r.kind]}</span><br>${d}${r.label && !/^<</.test(r.label) ? ` <span class="k">(${esc(r.label)})</span>` : ''}</li>`;
+  });
+  $('tree').innerHTML = groups.join('') + (rels.length ? `<h3>Relacje</h3><ul>${rels.join('')}</ul>` : '') || '<p class="k">Pusto.</p>';
+}
+
+function update() {
+  const L = lesson();
+  texts[L.id] = code.value;
+  model = parse(code.value, L.kind);
+  $('errs').innerHTML = model.errors.map(e => `<div>Linia ${e.line}: ${esc(e.msg)}</div>`).join('');
+  try { $('canvas').innerHTML = model.els.length ? render(model) : '<p class="empty">Tu pojawi się diagram.</p>'; }
+  catch (e) { $('canvas').innerHTML = `<p class="empty">Nie udało się narysować diagramu (${esc(e.message || String(e))}).</p>`; console.error(e); }
+  renderModel();
+  let i = progress[L.id] || 0;
+  const before = i;
+  while (i < L.steps.length) { let ok = false; try { ok = L.steps[i].check(model); } catch {} if (!ok) break; i++; }
+  if (i > before) { progress[L.id] = i; renderLesson(i - 1); }
+  save();
+}
+
+function load() {
+  code.value = texts[lesson().id] ?? lesson().start;
+  code.setSelectionRange(code.value.length, code.value.length);
+  renderLesson(); update();
+}
+
+// Clicking code in a step inserts it at the cursor, on its own line(s).
+function insert(s) {
+  const a = code.selectionStart, b = code.selectionEnd, v = code.value, before = v.slice(0, a), after = v.slice(b);
+  const ins = (before && !before.endsWith('\n') ? '\n' : '') + s + (after.startsWith('\n') ? '' : '\n');
+  code.focus();
+  code.setSelectionRange(a, b);
+  if (!document.execCommand('insertText', false, ins)) code.value = before + ins + after; // execCommand keeps Ctrl+Z working
+  update();
+}
+
+code.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(update, 250); });
+code.addEventListener('keydown', e => { if (e.key === 'Tab') { e.preventDefault(); document.execCommand('insertText', false, '  '); } });
+$('lesson').onchange = e => { active = +e.target.value; save(); load(); };
+$('steps').addEventListener('click', e => {
+  if (e.target.dataset.hint) { e.target.parentElement.textContent = '💡 ' + e.target.dataset.hint; return; }
+  if (e.target.classList.contains('q')) { const w = e.target.nextElementSibling; w.hidden = !w.hidden; return; }
+  if (e.target.closest('.why')) return;
+  const block = e.target.closest('pre') || (e.target.tagName === 'CODE' ? e.target : null);
+  if (block) insert(block.textContent);
+});
+const flashStatus = t => { $('status').textContent = t; setTimeout(() => { $('status').textContent = ''; }, 2000); };
+$('copy').onclick = () => navigator.clipboard?.writeText('@startuml\n' + code.value.trim() + '\n@enduml\n').then(() => flashStatus('Skopiowano (z @startuml i @enduml).'), () => flashStatus('Nie udało się skopiować. Zaznacz kod i skopiuj ręcznie.'));
+$('svg').onclick = () => {
+  const svg = $('canvas').querySelector('svg');
+  if (!svg) return flashStatus('Diagram jest pusty.');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([svg.outerHTML], { type: 'image/svg+xml' }));
+  a.download = lesson().id + '.svg';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+$('restart').onclick = () => {
+  if (!confirm('Zastąpić kod tej lekcji kodem startowym? Postęp zostaje.')) return;
+  code.value = lesson().start; update();
+};
+$('reset').onclick = () => {
+  if (!confirm('Usunąć cały kod i postęp we wszystkich lekcjach?')) return;
+  try { localStorage.removeItem(KEY); } catch {}
+  location.reload();
+};
+
+load();
+code.focus();
+</script>
+</body>
+</html>
