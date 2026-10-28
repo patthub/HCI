@@ -1,5 +1,5 @@
 // A PlantUML subset for use case and class diagrams: parse(text, kind) -> model, render(model) -> SVG (layout by dagre).
-// The syntax is kept PlantUML-compatible so students can paste their code into planttext.com.
+// The course content (content.js) describes its diagrams in this syntax; students only see the drawings.
 const norm = s => s.toLowerCase().replace(/ł/g, 'l').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim();
 const NAME = String.raw`"[^"]+"|\([^)]+\)|[\p{L}\p{N}_]+`;
 const DECL = new RegExp(String.raw`^(actor|usecase|abstract\s+class|abstract|class|interface|enum|rectangle|package)\s+(${NAME})(?:\s+as\s+([\p{L}\p{N}_]+))?\s*(\{)?\s*(\})?$`, 'iu');
@@ -60,24 +60,13 @@ function parse(text, kind) {
   });
   if (stack.length) errors.push({ line: lines.length, msg: `brakuje } zamykającego „${stack[stack.length - 1].label}”` });
 
-  const key = v => v == null ? null : typeof v === 'string' ? (get(v)?.key ?? '\0') : v.key;
-  return {
-    kind, els: list, rels, errors, get,
-    // like(/regex/ or 'substring', type): elements whose label matches, lowercase and without Polish letters
-    like: (re, type) => list.filter(e => (!type || e.type === type) && (re instanceof RegExp ? re.test(norm(e.label)) : norm(e.label).includes(norm(re)))),
-    // links(kind, from, to): relations of that kind; null matches anything; associations match in both directions
-    links(k, x, y) {
-      const X = key(x), Y = key(y);
-      return rels.filter(r => (!k || r.kind === k) && (((X == null || r.from === X) && (Y == null || r.to === Y)) || (r.kind === 'association' && (X == null || r.to === X) && (Y == null || r.from === Y))));
-    },
-    mult: (r, n) => { const k = key(n); return r.from === k ? r.fromMult : r.to === k ? r.toMult : undefined; },
-  };
+  return { kind, els: list, rels, errors, get };
 }
 
 // ---------- drawing (browser only) ----------
-const FONT = '13px system-ui, -apple-system, "Segoe UI", sans-serif', INK = '#1d2330', LH = 18;
+const FONT = '13px Helvetica, Arial, sans-serif', INK = '#1d2330', LH = 18;
 const STEREO = { interface: '«interface»', enum: '«enumeration»' };
-let ctx;
+let ctx, uid = 0;
 const tw = (s, bold) => { ctx ??= document.createElement('canvas').getContext('2d'); ctx.font = (bold ? 'bold ' : '') + FONT; return ctx.measureText(s).width; };
 const x = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const guil = s => s.replace(/<<\s*/g, '«').replace(/\s*>>/g, '»');
@@ -99,10 +88,11 @@ const DEFS = `<defs>
 <marker id="diamondF" viewBox="0 0 20 12" refX="19" refY="6" markerWidth="20" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M1,6 L10,1 L19,6 L10,11 z" fill="${INK}" stroke="${INK}" stroke-width="1.3"/></marker>
 </defs>`;
 
-function render(m) {
+function render(m, dir) {
+  const mk = 'u' + ++uid + '-'; // marker ids must be unique when a page holds many diagrams
   const uc = m.kind === 'usecase', byKey = Object.fromEntries(m.els.map(e => [e.key, e]));
   const g = new dagre.graphlib.Graph({ compound: true, multigraph: true });
-  g.setGraph({ rankdir: uc ? 'LR' : 'TB', nodesep: uc ? 24 : 50, ranksep: uc ? 80 : 70, edgesep: 20, marginx: 30, marginy: 40 });
+  g.setGraph({ rankdir: dir || (uc ? 'LR' : 'TB'), nodesep: uc ? 24 : 50, ranksep: uc ? 80 : 70, edgesep: 20, marginx: 30, marginy: 40 });
   m.els.forEach(e => g.setNode(e.key, size(e)));
   m.els.forEach(e => { if (e.parent && byKey[e.parent] && e.parent !== e.key) g.setParent(e.key, e.parent); });
   // Layout direction: parents, wholes and base use cases come first (top in class diagrams, left in use case diagrams).
@@ -131,7 +121,7 @@ function render(m) {
       const t = type === 'actor' ? Math.min(18 / Math.abs(dx), 28 / Math.abs(dy)) : 1 / Math.hypot(dx / (n.width / 2), dy / (n.height / 2));
       if (isFinite(t) && t < 1) pts[i] = { x: n.x + dx * t, y: cy + dy * t };
     }
-    out.push(`<path d="M ${pts.map(p => f(p.x) + ',' + f(p.y)).join(' L ')}" fill="none" stroke="${INK}" stroke-width="1.2"${r.dashed ? ' stroke-dasharray="6 4"' : ''}${r.lh ? ` marker-start="url(#${r.lh})"` : ''}${r.rh ? ` marker-end="url(#${r.rh})"` : ''}/>`);
+    out.push(`<path d="M ${pts.map(p => f(p.x) + ',' + f(p.y)).join(' L ')}" fill="none" stroke="${INK}" stroke-width="1.2"${r.dashed ? ' stroke-dasharray="6 4"' : ''}${r.lh ? ` marker-start="url(#${mk}${r.lh})"` : ''}${r.rh ? ` marker-end="url(#${mk}${r.rh})"` : ''}/>`);
     for (const [i, j, t] of [[0, 1, r.aMult], [pts.length - 1, pts.length - 2, r.bMult]]) {
       if (!t) continue;
       const p = pts[i], q = pts[j], d = Math.hypot(q.x - p.x, q.y - p.y) || 1, ux = (q.x - p.x) / d, uy = (q.y - p.y) / d;
@@ -164,7 +154,7 @@ function render(m) {
   });
 
   const { width: W, height: H } = g.graph();
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${f(W)}" height="${f(H)}" viewBox="0 0 ${f(W)} ${f(H)}" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" fill="${INK}">${DEFS}<rect width="100%" height="100%" fill="#fff"/>${out.join('')}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${f(W)}" height="${f(H)}" viewBox="0 0 ${f(W)} ${f(H)}" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="${INK}">${DEFS.replace(/id="/g, 'id="' + mk)}${out.join('')}</svg>`;
 }
 
 if (typeof module !== 'undefined') module.exports = { parse, norm };

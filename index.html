@@ -4,209 +4,214 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pracownia UML</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
+  /* Layout: fixed course outline on the left, one reading column on the right; diagrams sit on draw.io-style grid paper. */
   :root {
-    --bg: #f6f7f9; --panel: #ffffff; --text: #1d2330; --muted: #667085; --line: #e3e6eb;
-    --accent: #2f6fde; --ok: #1a8f4e; --cur: #eef4ff; --err: #c0362c;
-    --code-bg: #12151c; --code-text: #d7dce5; --canvas: #eceef2;
+    --bg: #f3f5f8; --surface: #ffffff; --ink: #172030; --muted: #5a6577; --line: #dce1e8;
+    --accent: #2453c9; --accent-soft: #e7edfb; --ok: #157a46; --ok-soft: #e3f3ea; --bad: #b8382a; --bad-soft: #fbe9e6;
+    --note: #fff6d6; --note-line: #e8c547; --paper: #ffffff; --grid: #e8edf5;
+    --display: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
+    --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
   }
   @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) { --bg: #0d1016; --panel: #161a22; --text: #e2e6ee; --muted: #8b94a5; --line: #262c38; --accent: #6ea2ff; --ok: #4cc38a; --cur: #1b2436; --err: #ff9b9b; --canvas: #0d1016; color-scheme: dark; }
+    :root:not([data-theme="light"]) { --bg: #0e1218; --surface: #161b24; --ink: #e5e9f0; --muted: #98a2b3; --line: #273041; --accent: #8aaeff; --accent-soft: #1b2741; --ok: #5cc995; --ok-soft: #13291e; --bad: #ff8f80; --bad-soft: #321a17; --note: #2a2410; --note-line: #9a7e1e; --paper: #f9fbfe; --grid: #e3e9f2; color-scheme: dark; }
   }
+  :root[data-theme="dark"] { --bg: #0e1218; --surface: #161b24; --ink: #e5e9f0; --muted: #98a2b3; --line: #273041; --accent: #8aaeff; --accent-soft: #1b2741; --ok: #5cc995; --ok-soft: #13291e; --bad: #ff8f80; --bad-soft: #321a17; --note: #2a2410; --note-line: #9a7e1e; --paper: #f9fbfe; --grid: #e3e9f2; color-scheme: dark; }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; height: 100vh; display: flex; flex-direction: column; }
-  header { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--panel); }
-  header h1 { font-size: 17px; margin: 0; flex: 1; }
-  header small { color: var(--muted); font-weight: normal; }
-  button { font: inherit; font-size: 13px; border: 1px solid var(--line); background: var(--panel); color: var(--text); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
-  button:hover { border-color: var(--accent); }
-  a { color: var(--accent); }
-  main { flex: 1; display: grid; grid-template-columns: 360px 1fr 240px; min-height: 0; }
-  aside, #model { background: var(--panel); overflow-y: auto; padding: 14px 16px; }
-  aside { border-right: 1px solid var(--line); }
-  #model { border-left: 1px solid var(--line); font-size: 13px; }
-  select { width: 100%; font: inherit; padding: 6px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); color: var(--text); }
-  .intro { color: var(--muted); font-size: 14px; margin: 10px 0 14px; }
-  .intro b { color: var(--text); }
-  ol { padding: 0; margin: 0; list-style: none; counter-reset: s; }
-  li.step { counter-increment: s; padding: 8px 10px 8px 34px; border-radius: 8px; position: relative; margin-bottom: 4px; font-size: 14px; opacity: .55; }
-  li.step::before { content: counter(s); position: absolute; left: 8px; top: 8px; width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--muted); font-size: 11px; text-align: center; line-height: 17px; }
-  li.step.done { opacity: .75; }
-  li.step.done::before { content: "✓"; background: var(--ok); border-color: var(--ok); color: #fff; }
-  li.step.cur { opacity: 1; background: var(--cur); outline: 1px solid var(--accent); }
-  li.step.cur::before { border-color: var(--accent); color: var(--accent); }
-  li.step.flash { animation: flash .6s; }
-  @keyframes flash { from { background: color-mix(in srgb, var(--ok) 30%, transparent); } }
-  code { font: 13px ui-monospace, Menlo, Consolas, monospace; background: color-mix(in srgb, var(--accent) 12%, transparent); padding: 1px 4px; border-radius: 4px; word-break: break-word; }
-  li.step code { cursor: pointer; }
-  li.step code:hover { outline: 1px solid var(--accent); }
-  li.step pre { font: 12.5px/1.45 ui-monospace, Menlo, Consolas, monospace; background: var(--code-bg); color: var(--code-text); padding: 8px 10px; border-radius: 6px; overflow-x: auto; cursor: copy; margin: 6px 0 2px; position: relative; }
-  li.step pre:hover::after { content: "kliknij, aby wstawić"; position: absolute; top: 4px; right: 8px; font-size: 11px; color: var(--muted); }
-  li.step.has-q { padding-right: 32px; }
-  .q { position: absolute; top: 7px; right: 6px; width: 20px; height: 20px; padding: 0; border-radius: 50%; font-size: 12px; font-weight: 600; color: var(--accent); }
-  .why { margin-top: 6px; padding: 6px 8px; border-left: 2px solid var(--accent); font-size: 13px; }
-  .why div { margin: 2px 0; } .why p { margin: 4px 0 0; color: var(--muted); }
-  .why code { cursor: default; }
-  .hint { font-size: 13px; color: var(--muted); }
-  .hint button { font-size: 12px; padding: 1px 6px; }
-  .done-box { margin-top: 12px; padding: 10px; border-radius: 8px; background: color-mix(in srgb, var(--ok) 15%, transparent); }
-  #work { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
-  #code { height: 38%; min-height: 140px; resize: vertical; background: var(--code-bg); color: var(--code-text); font: 14px/1.5 ui-monospace, Menlo, Consolas, monospace; padding: 12px 14px; border: 0; outline: 0; tab-size: 2; caret-color: #7ee787; }
-  #errs { font: 13px ui-monospace, Menlo, Consolas, monospace; color: var(--err); background: var(--panel); border-bottom: 1px solid var(--line); padding: 0 14px; }
-  #errs div { padding: 3px 0; }
-  #bar { display: flex; gap: 8px; padding: 8px 14px; background: var(--panel); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
-  #bar span { flex: 1; color: var(--muted); font-size: 13px; align-self: center; }
-  #canvas { flex: 1; overflow: auto; background: var(--canvas); padding: 16px; }
-  #canvas svg { display: block; background: #fff; border-radius: 4px; box-shadow: 0 1px 3px rgb(0 0 0 / .15); max-width: none; }
-  #canvas .empty { color: var(--muted); }
-  #model h2 { font: 600 12px system-ui, sans-serif; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 0 0 4px; }
-  #model > p { color: var(--muted); margin: 0 0 10px; }
-  #model h3 { font-size: 13px; margin: 12px 0 4px; }
-  #model ul { list-style: none; margin: 0; padding: 0; }
-  #model li { padding: 2px 0; }
-  #model .k { color: var(--muted); font-size: 12px; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.6 var(--body); display: grid; grid-template-columns: 300px 1fr; }
+  a { color: var(--accent); text-underline-offset: 2px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+
+  nav { background: var(--surface); border-right: 1px solid var(--line); height: 100vh; position: sticky; top: 0; overflow-y: auto; padding: 24px 18px; }
+  .brand { font: 700 22px/1.1 var(--display); letter-spacing: -.01em; margin: 0; }
+  .brand small { display: block; font: 500 12px var(--mono); color: var(--muted); letter-spacing: .04em; text-transform: uppercase; margin-top: 6px; }
+  .progress { margin: 18px 0 8px; font: 13px var(--mono); color: var(--muted); }
+  .bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; margin-top: 6px; }
+  .bar i { display: block; height: 100%; background: var(--ok); transition: width .3s; }
+  nav h2 { font: 500 11px var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 22px 0 6px; }
+  nav ol { list-style: none; margin: 0; padding: 0; }
+  nav a { display: flex; gap: 10px; align-items: baseline; padding: 6px 8px; border-radius: 6px; color: var(--ink); text-decoration: none; font-size: 15px; line-height: 1.35; }
+  nav a:hover { background: var(--accent-soft); }
+  nav a.on { background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+  nav a .dot { flex: none; width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--line); position: relative; top: 2px; }
+  nav a.done .dot { background: var(--ok); border-color: var(--ok); }
+  nav a.done .dot::after { content: ""; position: absolute; left: 4.5px; top: 1.5px; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+  #menu { display: none; }
+
+  main { min-width: 0; padding: 48px max(16px, env(safe-area-inset-right, 0px)) 80px max(16px, env(safe-area-inset-left, 0px)); }
+  article { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+  .eyebrow { font: 500 12px var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--accent); margin: 0; }
+  h1 { font: 700 clamp(30px, 4vw, 42px)/1.1 var(--display); letter-spacing: -.02em; margin: -8px 0 6px; text-wrap: balance; }
+  article h2 { font: 700 22px/1.25 var(--display); margin: 22px 0 0; text-wrap: balance; }
+  article p { margin: 0; max-width: 66ch; }
+  article ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; max-width: 66ch; }
+  code { font: 14px var(--mono); background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; }
+  i { font-style: italic; }
+
+  .paper { background-color: var(--paper); background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px); background-size: 16px 16px; border: 1px solid var(--line); border-radius: 8px; padding: 14px; display: flex; justify-content: center; align-items: center; overflow-x: auto; }
+  .paper svg { max-width: 100%; height: auto; }
+  .shape .paper { min-height: 120px; }
+  figure { margin: 0; display: flex; flex-direction: column; gap: 8px; }
+  figcaption { font-size: 14px; color: var(--muted); }
+
+  .shape { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+  .shape h3 { font: 700 20px/1.2 var(--display); margin: 0 0 6px; }
+  .shape .txt { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .shape ul { font-size: 15.5px; }
+  .drawio { font-size: 14.5px; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 10px; }
+  .drawio b { font: 500 11px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--ink); margin-right: 6px; }
+
+  .note { background: var(--note); border-left: 4px solid var(--note-line); padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 16px; }
+
+  .tbl { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 15.5px; background: var(--surface); border-radius: 8px; overflow: hidden; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  th { font: 500 12px var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); background: var(--bg); }
+  tr:last-child td { border-bottom: 0; }
+  td.fig { width: 210px; padding: 6px; }
+  td.fig .paper { padding: 6px; border-radius: 6px; }
+
+  .pair { display: flex; flex-direction: column; gap: 10px; }
+  .pair h3 { font: 700 18px var(--display); margin: 0; }
+  .pair .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+  .pair figure { min-width: 0; }
+  .tag { font: 500 11px var(--mono); text-transform: uppercase; letter-spacing: .06em; padding: 2px 8px; border-radius: 10px; align-self: flex-start; }
+  .tag.bad { background: var(--bad-soft); color: var(--bad); }
+  .tag.ok { background: var(--ok-soft); color: var(--ok); }
+  .pair .paper.bad { border-color: color-mix(in srgb, var(--bad) 45%, var(--line)); }
+  .pair .paper.ok { border-color: color-mix(in srgb, var(--ok) 45%, var(--line)); }
+  .pair p { font-size: 15.5px; color: var(--muted); }
+
+  .quiz { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+  .quiz .q { font-weight: 700; }
+  .opts { display: flex; flex-direction: column; gap: 6px; }
+  .opts button { text-align: left; background: var(--bg); border: 1.5px solid var(--line); border-radius: 8px; padding: 9px 12px; font-size: 16px; }
+  .opts button:hover:not(:disabled) { border-color: var(--accent); }
+  .opts button.right { border-color: var(--ok); background: var(--ok-soft); }
+  .opts button.wrong { border-color: var(--bad); background: var(--bad-soft); }
+  .opts button:disabled { cursor: default; }
+  .verdict { font-size: 15.5px; }
+  .verdict b.ok { color: var(--ok); } .verdict b.bad { color: var(--bad); }
+
+  .task { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+  .task h2 { margin: 0; }
+  .task .check { font-size: 15.5px; }
+  .task .check li::marker { content: "☐  "; }
+  details summary { cursor: pointer; color: var(--accent); font-weight: 700; }
+  details[open] summary { margin-bottom: 10px; }
+
+  .pager { display: flex; justify-content: space-between; gap: 12px; margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--line); }
+  .pager a { text-decoration: none; display: flex; flex-direction: column; font-weight: 700; }
+  .pager a span { font: 500 11px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .pager a.next { text-align: right; margin-left: auto; }
+  .reset { margin-top: 26px; background: none; border: 0; color: var(--muted); font-size: 13px; text-decoration: underline; padding: 0; }
+
   @media (max-width: 900px) {
-    body { height: auto; }
-    main { grid-template-columns: 1fr; }
-    #work { order: -1; }
-    #code { height: 40vh; }
-    #canvas { min-height: 50vh; }
-    aside, #model { border: 0; border-top: 1px solid var(--line); }
+    body { display: block; }
+    nav { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--line); padding: 16px max(16px, env(safe-area-inset-right, 0px)) 16px max(16px, env(safe-area-inset-left, 0px)); }
+    #menu { display: block; margin-top: 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; font-size: 15px; }
+    nav:not(.open) #toc { display: none; }
+    main { padding-top: 28px; }
+    .pair .two { grid-template-columns: minmax(0, 1fr); }
+    td.fig { width: 150px; }
   }
+  @media (prefers-reduced-motion: reduce) { .bar i { transition: none; } }
 </style>
 </head>
 <body>
-<header>
-  <h1>Pracownia UML <small>· Human-Computer Interaction</small></h1>
-  <button id="reset">Zacznij od nowa</button>
-</header>
-<main>
-  <aside>
-    <select id="lesson" aria-label="lekcja"></select>
-    <p class="intro" id="intro"></p>
-    <ol id="steps"></ol>
-    <div id="donebox"></div>
-  </aside>
-  <section id="work">
-    <textarea id="code" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="kod diagramu"></textarea>
-    <div id="errs"></div>
-    <div id="bar"><span id="status"></span><button id="restart">Przywróć kod startowy</button><button id="copy">Kopiuj kod</button><button id="svg">Pobierz SVG</button></div>
-    <div id="canvas"></div>
-  </section>
-  <div id="model"><h2>Model</h2><p>Tak edytor zrozumiał kod.</p><div id="tree"></div></div>
-</main>
+<nav id="nav">
+  <p class="brand">Pracownia UML<small>Human-Computer Interaction</small></p>
+  <div class="progress"><span id="count"></span><div class="bar"><i id="fill"></i></div></div>
+  <button id="menu" aria-expanded="false">Spis lekcji</button>
+  <div id="toc"></div>
+  <button class="reset" id="reset">Wyczyść moje odpowiedzi</button>
+</nav>
+<main><article id="page"></article></main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dagre/0.8.5/dagre.min.js"></script>
 <script src="uml.js"></script>
-<script src="lessons.js"></script>
+<script src="content.js"></script>
 <script>
-const KEY = 'uml-practice-v1';
-let saved = {};
-try { saved = JSON.parse(localStorage.getItem(KEY)) || {}; } catch {}
-const progress = saved.progress || {}, texts = saved.texts || {};
-let active = Math.min(saved.active || 0, LESSONS.length - 1), model, timer;
+const KEY = 'uml-course-v1';
+let state = {};
+try { state = JSON.parse(localStorage.getItem(KEY)) || {}; } catch {}
+state.answers ??= {}; state.seen ??= {};
+const store = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
 const $ = id => document.getElementById(id);
-const code = $('code');
-const lesson = () => LESSONS[active];
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify({ progress, texts, active })); } catch {} };
+const html = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const ALL = COURSE.flatMap((m, mi) => m.lessons.map((l, li) => ({ ...l, kind: m.kind, module: m.title, mi, li })));
+const quizzes = L => L.blocks.filter(b => b.t === 'quiz');
+const isDone = L => quizzes(L).length ? quizzes(L).every((q, i) => state.answers[L.id + ':' + i] === q.answer) : !!state.seen[L.id];
+const draw = (src, kind, dir) => { try { return render(parse(src, kind), dir); } catch (e) { console.error(e); return '<p>Nie udało się narysować diagramu.</p>'; } };
+const paper = (src, kind, cls = '', dir) => `<div class="paper ${cls}">${draw(src, kind, dir)}</div>`;
 
-function renderLesson(flashIdx) {
-  const L = lesson(), done = progress[L.id] || 0;
-  $('lesson').innerHTML = LESSONS.map((l, i) => `<option value="${i}" ${i === active ? 'selected' : ''}>${l.title} (${Math.min(progress[l.id] || 0, l.steps.length)}/${l.steps.length})</option>`).join('');
-  $('intro').innerHTML = L.intro;
-  $('steps').innerHTML = L.steps.map((s, i) => `<li class="step ${i < done ? 'done' : i === done ? 'cur' : ''} ${i === flashIdx ? 'flash' : ''} ${s.why ? 'has-q' : ''}">${s.do}${s.why ? `<button class="q" title="Co oznacza ten zapis?">?</button><div class="why" hidden>${s.why}</div>` : ''}${s.hint && i === done ? ` <span class="hint"><button data-hint="${esc(s.hint).replace(/"/g, '&quot;')}">podpowiedź</button></span>` : ''}</li>`).join('');
-  const next = LESSONS[active + 1];
-  $('donebox').innerHTML = done >= L.steps.length ? `<div class="done-box">Lekcja ukończona. ${next ? `<button id="next">Dalej: ${next.title} →</button>` : 'Na razie to wszystko.'}</div>` : '';
-  if (next && done >= L.steps.length) $('next').onclick = () => { active++; save(); load(); };
-  $('steps').querySelector('.cur')?.scrollIntoView({ block: 'nearest' });
+function block(b, L, qi) {
+  const kind = b.kind || L.kind;
+  switch (b.t) {
+    case 'p': return `<p>${b.html}</p>`;
+    case 'h': return `<h2>${b.text}</h2>`;
+    case 'note': return `<div class="note">${b.html}</div>`;
+    case 'list': return `<ul>${b.items.map(i => `<li>${i}</li>`).join('')}</ul>`;
+    case 'fig': return `<figure>${paper(b.src, kind)}${b.caption ? `<figcaption>${b.caption}</figcaption>` : ''}</figure>`;
+    case 'table': return `<div class="tbl"><table><tr>${b.head.map(c => `<th>${c}</th>`).join('')}</tr>${b.rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</table></div>`;
+    case 'lines': return `<div class="tbl"><table><tr><th>Wygląd</th><th>Nazwa i znaczenie</th><th>W draw.io</th></tr>${b.rows.map(([src, k, name, means, how]) => `<tr><td class="fig">${paper(src, k, '', 'LR')}</td><td><b>${name}</b><br>${means}</td><td>${how}</td></tr>`).join('')}</table></div>`;
+    case 'shape': return `<section class="shape">${paper(b.src, kind)}<div class="txt"><h3>${b.name}</h3><p>${b.means}</p>${b.rules.length ? `<ul>${b.rules.map(r => `<li>${r}</li>`).join('')}</ul>` : ''}<div class="drawio"><b>draw.io</b>${b.drawio}</div></div></section>`;
+    case 'pair': return `<section class="pair"><h3>${b.title}</h3><div class="two"><figure><span class="tag bad">Źle</span>${paper(b.bad, kind, 'bad')}</figure><figure><span class="tag ok">Dobrze</span>${paper(b.good, kind, 'ok')}</figure></div><p>${b.why}</p></section>`;
+    case 'task': return `<section class="task"><h2>${b.title}</h2><p>${b.html}</p><div class="check"><b>Sprawdź przed oddaniem:</b><ul>${b.check.map(c => `<li>${c}</li>`).join('')}</ul></div>${b.src ? `<details><summary>Pokaż przykładowe rozwiązanie</summary>${paper(b.src, kind)}</details>` : ''}</section>`;
+    case 'quiz': return `<section class="quiz" data-q="${qi}"><div class="q">${b.q}</div>${b.src ? paper(b.src, kind) : ''}<div class="opts">${b.options.map((o, i) => `<button data-i="${i}">${o}</button>`).join('')}</div><div class="verdict" aria-live="polite"></div></section>`;
+  }
 }
 
-const KIND = { association: 'asocjacja', generalization: 'generalizacja', realization: 'realizacja', composition: 'kompozycja', aggregation: 'agregacja', dependency: 'zależność', include: '«include»', extend: '«extend»' };
-const GROUP = { actor: 'Aktorzy', usecase: 'Przypadki użycia', rect: 'Granice systemu', class: 'Klasy', abstract: 'Klasy abstrakcyjne', interface: 'Interfejsy', enum: 'Wyliczenia' };
-function renderModel() {
-  const name = k => esc(model.els.find(e => e.key === k).label);
-  const end = (k, mu) => name(k) + (mu ? ` <span class="k">[${esc(mu)}]</span>` : '');
-  const groups = Object.keys(GROUP).map(t => {
-    const els = model.els.filter(e => e.type === t);
-    if (!els.length) return '';
-    return `<h3>${GROUP[t]}</h3><ul>${els.map(e => `<li>${esc(e.label)}${t === 'usecase' && !e.parent ? ' <span class="k">poza granicą systemu</span>' : ''}${['class', 'abstract', 'interface'].includes(t) ? ` <span class="k">atr. ${e.attrs.length}, op. ${e.ops.length}</span>` : ''}${t === 'enum' ? ` <span class="k">${e.attrs.map(a => esc(a.name)).join(', ')}</span>` : ''}</li>`).join('')}</ul>`;
+function showAnswer(sec, L) {
+  const qi = +sec.dataset.q, q = quizzes(L)[qi], a = state.answers[L.id + ':' + qi];
+  if (a == null) return;
+  const ok = a === q.answer;
+  sec.querySelectorAll('.opts button').forEach((b, i) => {
+    b.classList.toggle('right', ok && i === q.answer);
+    b.classList.toggle('wrong', i === a && !ok);
+    b.disabled = ok;
   });
-  const rels = model.rels.map(r => {
-    const d = r.kind === 'association' ? `${end(r.a, r.aMult)} ${r.nav ? '→' : '—'} ${end(r.b, r.bMult)}`
-      : r.kind === 'composition' || r.kind === 'aggregation' ? `całość ${end(r.to, r.toMult)}, część ${end(r.from, r.fromMult)}`
-      : r.kind === 'generalization' ? `${name(r.from)} dziedziczy po: ${name(r.to)}`
-      : r.kind === 'realization' ? `${name(r.from)} realizuje ${name(r.to)}`
-      : r.kind === 'include' ? `${name(r.from)} zawsze wykonuje ${name(r.to)}`
-      : r.kind === 'extend' ? `${name(r.from)} czasem rozszerza ${name(r.to)}`
-      : `${name(r.from)} używa ${name(r.to)}`;
-    return `<li><span class="k">${KIND[r.kind]}</span><br>${d}${r.label && !/^<</.test(r.label) ? ` <span class="k">(${esc(r.label)})</span>` : ''}</li>`;
-  });
-  $('tree').innerHTML = groups.join('') + (rels.length ? `<h3>Relacje</h3><ul>${rels.join('')}</ul>` : '') || '<p class="k">Pusto.</p>';
+  sec.querySelector('.verdict').innerHTML = ok ? `<b class="ok">Dobrze.</b> ${q.explain || ''}` : `<b class="bad">Nie.</b> Spróbuj jeszcze raz.`;
 }
 
-function update() {
-  const L = lesson();
-  texts[L.id] = code.value;
-  model = parse(code.value, L.kind);
-  $('errs').innerHTML = model.errors.map(e => `<div>Linia ${e.line}: ${esc(e.msg)}</div>`).join('');
-  try { $('canvas').innerHTML = model.els.length ? render(model) : '<p class="empty">Tu pojawi się diagram.</p>'; }
-  catch (e) { $('canvas').innerHTML = `<p class="empty">Nie udało się narysować diagramu (${esc(e.message || String(e))}).</p>`; console.error(e); }
-  renderModel();
-  let i = progress[L.id] || 0;
-  const before = i;
-  while (i < L.steps.length) { let ok = false; try { ok = L.steps[i].check(model); } catch {} if (!ok) break; i++; }
-  if (i > before) { progress[L.id] = i; renderLesson(i - 1); }
-  save();
+function renderNav(cur) {
+  const done = ALL.filter(isDone).length;
+  $('count').textContent = `Ukończone lekcje: ${done} z ${ALL.length}`;
+  $('fill').style.width = (100 * done / ALL.length) + '%';
+  $('toc').innerHTML = COURSE.map(m => `<h2>${m.title}</h2><ol>${m.lessons.map(l => `<li><a href="#${l.id}" class="${l.id === cur ? 'on' : ''} ${isDone(ALL.find(x => x.id === l.id)) ? 'done' : ''}"><span class="dot"></span>${l.title}</a></li>`).join('')}</ol>`).join('');
 }
 
-function load() {
-  code.value = texts[lesson().id] ?? lesson().start;
-  code.setSelectionRange(code.value.length, code.value.length);
-  renderLesson(); update();
+function show() {
+  const idx = Math.max(0, ALL.findIndex(l => l.id === location.hash.slice(1)));
+  const L = ALL[idx], prev = ALL[idx - 1], next = ALL[idx + 1];
+  state.seen[L.id] = true; state.last = L.id; store();
+  let qi = 0;
+  const number = L.mi === 0 ? '' : ` · Lekcja ${L.li + 1}`;
+  $('page').innerHTML = `<p class="eyebrow">${L.module}${number}</p><h1>${L.title}</h1>` + L.blocks.map(b => block(b, L, b.t === 'quiz' ? qi++ : null)).join('')
+    + `<div class="pager">${prev ? `<a href="#${prev.id}"><span>← Poprzednia</span>${prev.title}</a>` : ''}${next ? `<a class="next" href="#${next.id}"><span>Następna →</span>${next.title}</a>` : ''}</div>`;
+  $('page').querySelectorAll('.quiz').forEach(s => showAnswer(s, L));
+  $('page').onclick = e => {
+    const btn = e.target.closest('.opts button');
+    if (!btn) return;
+    const sec = btn.closest('.quiz');
+    state.answers[L.id + ':' + sec.dataset.q] = +btn.dataset.i;
+    store(); showAnswer(sec, L); renderNav(L.id);
+  };
+  renderNav(L.id);
+  $('nav').classList.remove('open'); $('menu').setAttribute('aria-expanded', 'false');
+  window.scrollTo(0, 0);
 }
 
-// Clicking code in a step inserts it at the cursor, on its own line(s).
-function insert(s) {
-  const a = code.selectionStart, b = code.selectionEnd, v = code.value, before = v.slice(0, a), after = v.slice(b);
-  const ins = (before && !before.endsWith('\n') ? '\n' : '') + s + (after.startsWith('\n') ? '' : '\n');
-  code.focus();
-  code.setSelectionRange(a, b);
-  if (!document.execCommand('insertText', false, ins)) code.value = before + ins + after; // execCommand keeps Ctrl+Z working
-  update();
-}
-
-code.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(update, 250); });
-code.addEventListener('keydown', e => { if (e.key === 'Tab') { e.preventDefault(); document.execCommand('insertText', false, '  '); } });
-$('lesson').onchange = e => { active = +e.target.value; save(); load(); };
-$('steps').addEventListener('click', e => {
-  if (e.target.dataset.hint) { e.target.parentElement.textContent = '💡 ' + e.target.dataset.hint; return; }
-  if (e.target.classList.contains('q')) { const w = e.target.nextElementSibling; w.hidden = !w.hidden; return; }
-  if (e.target.closest('.why')) return;
-  const block = e.target.closest('pre') || (e.target.tagName === 'CODE' ? e.target : null);
-  if (block) insert(block.textContent);
-});
-const flashStatus = t => { $('status').textContent = t; setTimeout(() => { $('status').textContent = ''; }, 2000); };
-$('copy').onclick = () => navigator.clipboard?.writeText('@startuml\n' + code.value.trim() + '\n@enduml\n').then(() => flashStatus('Skopiowano (z @startuml i @enduml).'), () => flashStatus('Nie udało się skopiować. Zaznacz kod i skopiuj ręcznie.'));
-$('svg').onclick = () => {
-  const svg = $('canvas').querySelector('svg');
-  if (!svg) return flashStatus('Diagram jest pusty.');
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([svg.outerHTML], { type: 'image/svg+xml' }));
-  a.download = lesson().id + '.svg';
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-};
-$('restart').onclick = () => {
-  if (!confirm('Zastąpić kod tej lekcji kodem startowym? Postęp zostaje.')) return;
-  code.value = lesson().start; update();
-};
-$('reset').onclick = () => {
-  if (!confirm('Usunąć cały kod i postęp we wszystkich lekcjach?')) return;
-  try { localStorage.removeItem(KEY); } catch {}
-  location.reload();
-};
-
-load();
-code.focus();
+$('menu').onclick = () => { const open = $('nav').classList.toggle('open'); $('menu').setAttribute('aria-expanded', open); };
+$('reset').onclick = () => { if (confirm('Usunąć wszystkie zapisane odpowiedzi i postęp?')) { state = { answers: {}, seen: {} }; store(); show(); } };
+window.addEventListener('hashchange', show);
+if (!location.hash && state.last) history.replaceState(null, '', '#' + state.last);
+show();
 </script>
 </body>
 </html>
