@@ -88,16 +88,6 @@
   .pair .paper.ok { border-color: color-mix(in srgb, var(--ok) 45%, var(--line)); }
   .pair p { font-size: 15.5px; color: var(--muted); }
 
-  .quiz { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
-  .quiz .q { font-weight: 700; }
-  .opts { display: flex; flex-direction: column; gap: 6px; }
-  .opts button { text-align: left; background: var(--bg); border: 1.5px solid var(--line); border-radius: 8px; padding: 9px 12px; font-size: 16px; }
-  .opts button:hover:not(:disabled) { border-color: var(--accent); }
-  .opts button.right { border-color: var(--ok); background: var(--ok-soft); }
-  .opts button.wrong { border-color: var(--bad); background: var(--bad-soft); }
-  .opts button:disabled { cursor: default; }
-  .verdict { font-size: 15.5px; }
-  .verdict b.ok { color: var(--ok); } .verdict b.bad { color: var(--bad); }
 
   .task { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
   .task h2 { margin: 0; }
@@ -130,7 +120,7 @@
   <div class="progress"><span id="count"></span><div class="bar"><i id="fill"></i></div></div>
   <button id="menu" aria-expanded="false">Spis lekcji</button>
   <div id="toc"></div>
-  <button class="reset" id="reset">Wyczyść moje odpowiedzi</button>
+  <button class="reset" id="reset">Wyczyść postęp</button>
 </nav>
 <main><article id="page"></article></main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dagre/0.8.5/dagre.min.js"></script>
@@ -141,17 +131,16 @@
 const KEY = 'uml-course-v1';
 let state = {};
 try { state = JSON.parse(localStorage.getItem(KEY)) || {}; } catch {}
-state.answers ??= {}; state.seen ??= {};
+state.seen ??= {};
 const store = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
 const $ = id => document.getElementById(id);
 const html = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const ALL = COURSE.flatMap((m, mi) => m.lessons.map((l, li) => ({ ...l, kind: m.kind, module: m.title, mi, li })));
-const quizzes = L => L.blocks.filter(b => b.t === 'quiz');
-const isDone = L => quizzes(L).length ? quizzes(L).every((q, i) => state.answers[L.id + ':' + i] === q.answer) : !!state.seen[L.id];
+const isDone = L => !!state.seen[L.id];
 const draw = (src, kind, dir) => { try { return kind === 'bpmn' ? BPMN.render(BPMN.parse(src)) : render(parse(src, kind), dir); } catch (e) { console.error(e); return '<p>Nie udało się narysować diagramu.</p>'; } };
 const paper = (src, kind, cls = '', dir) => `<div class="paper ${cls}">${draw(src, kind, dir)}</div>`;
 
-function block(b, L, qi) {
+function block(b, L) {
   const kind = b.kind || L.kind;
   switch (b.t) {
     case 'p': return `<p>${b.html}</p>`;
@@ -164,20 +153,7 @@ function block(b, L, qi) {
     case 'shape': return `<section class="shape">${paper(b.src, kind)}<div class="txt"><h3>${b.name}</h3><p>${b.means}</p>${b.rules.length ? `<ul>${b.rules.map(r => `<li>${r}</li>`).join('')}</ul>` : ''}<div class="drawio"><b>draw.io</b>${b.drawio}</div></div></section>`;
     case 'pair': return `<section class="pair"><h3>${b.title}</h3><div class="two"><figure><span class="tag bad">Źle</span>${paper(b.bad, kind, 'bad')}</figure><figure><span class="tag ok">Dobrze</span>${paper(b.good, kind, 'ok')}</figure></div><p>${b.why}</p></section>`;
     case 'task': return `<section class="task"><h2>${b.title}</h2><p>${b.html}</p><div class="check"><b>Sprawdź przed oddaniem:</b><ul>${b.check.map(c => `<li>${c}</li>`).join('')}</ul></div>${b.src ? `<details><summary>Pokaż przykładowe rozwiązanie</summary>${paper(b.src, kind)}</details>` : ''}</section>`;
-    case 'quiz': return `<section class="quiz" data-q="${qi}"><div class="q">${b.q}</div>${b.src ? paper(b.src, kind) : ''}<div class="opts">${b.options.map((o, i) => `<button data-i="${i}">${o}</button>`).join('')}</div><div class="verdict" aria-live="polite"></div></section>`;
   }
-}
-
-function showAnswer(sec, L) {
-  const qi = +sec.dataset.q, q = quizzes(L)[qi], a = state.answers[L.id + ':' + qi];
-  if (a == null) return;
-  const ok = a === q.answer;
-  sec.querySelectorAll('.opts button').forEach((b, i) => {
-    b.classList.toggle('right', ok && i === q.answer);
-    b.classList.toggle('wrong', i === a && !ok);
-    b.disabled = ok;
-  });
-  sec.querySelector('.verdict').innerHTML = ok ? `<b class="ok">Dobrze.</b> ${q.explain || ''}` : `<b class="bad">Nie.</b> Spróbuj jeszcze raz.`;
 }
 
 function renderNav(cur) {
@@ -191,25 +167,16 @@ function show() {
   const idx = Math.max(0, ALL.findIndex(l => l.id === location.hash.slice(1)));
   const L = ALL[idx], prev = ALL[idx - 1], next = ALL[idx + 1];
   state.seen[L.id] = true; state.last = L.id; store();
-  let qi = 0;
   const number = L.mi === 0 ? '' : ` · Lekcja ${L.li + 1}`;
-  $('page').innerHTML = `<p class="eyebrow">${L.module}${number}</p><h1>${L.title}</h1>` + L.blocks.map(b => block(b, L, b.t === 'quiz' ? qi++ : null)).join('')
+  $('page').innerHTML = `<p class="eyebrow">${L.module}${number}</p><h1>${L.title}</h1>` + L.blocks.map(b => block(b, L)).join('')
     + `<div class="pager">${prev ? `<a href="#${prev.id}"><span>← Poprzednia</span>${prev.title}</a>` : ''}${next ? `<a class="next" href="#${next.id}"><span>Następna →</span>${next.title}</a>` : ''}</div>`;
-  $('page').querySelectorAll('.quiz').forEach(s => showAnswer(s, L));
-  $('page').onclick = e => {
-    const btn = e.target.closest('.opts button');
-    if (!btn) return;
-    const sec = btn.closest('.quiz');
-    state.answers[L.id + ':' + sec.dataset.q] = +btn.dataset.i;
-    store(); showAnswer(sec, L); renderNav(L.id);
-  };
   renderNav(L.id);
   $('nav').classList.remove('open'); $('menu').setAttribute('aria-expanded', 'false');
   window.scrollTo(0, 0);
 }
 
 $('menu').onclick = () => { const open = $('nav').classList.toggle('open'); $('menu').setAttribute('aria-expanded', open); };
-$('reset').onclick = () => { if (confirm('Usunąć wszystkie zapisane odpowiedzi i postęp?')) { state = { answers: {}, seen: {} }; store(); show(); } };
+$('reset').onclick = () => { if (confirm('Wyczyścić zapisany postęp?')) { state = { seen: {} }; store(); show(); } };
 window.addEventListener('hashchange', show);
 if (!location.hash && state.last) history.replaceState(null, '', '#' + state.last);
 show();

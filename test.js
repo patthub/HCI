@@ -1,4 +1,4 @@
-// Checks the parser and that every diagram and quiz in the course is well formed. Run: node test.js
+// Checks the parser and that every diagram in the course is well formed. Run: node test.js
 const assert = require('assert');
 const { parse } = require('./uml.js');
 const { COURSE } = require('./content.js');
@@ -35,12 +35,11 @@ for (const m of COURSE) for (const L of m.lessons) {
       const res = k === 'bpmn' ? BPMN.parse(s) : parse(s, k);
       assert.deepStrictEqual(res.errors, [], `${L.id}: diagram does not parse:\n${s}`);
       assert(res.els.length, `${L.id}: empty diagram`);
-      if (k === 'bpmn') { // quizzes and the left side of a pair show broken diagrams on purpose
-        if (s !== b.bad && b.t !== 'quiz') assert.deepStrictEqual(BPMN.lint(res), [], `${L.id}: BPMN rule broken:\n${s}`);
+      if (k === 'bpmn') { // the left side of a pair shows a broken diagram on purpose
+        if (s !== b.bad) assert.deepStrictEqual(BPMN.lint(res), [], `${L.id}: BPMN rule broken:\n${s}`);
         assert(BPMN.render(res).startsWith('<svg'), `${L.id}: does not render`);
       }
     }
-    if (b.t === 'quiz') assert(b.answer >= 0 && b.answer < b.options.length, `${L.id}: quiz answer out of range: ${b.q}`);
   }
 }
 console.log('all good');
