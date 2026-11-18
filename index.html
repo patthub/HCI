@@ -152,7 +152,7 @@ function block(b, L) {
     case 'lines': return `<div class="tbl"><table><tr><th>Wygląd</th><th>Nazwa i znaczenie</th><th>W draw.io</th></tr>${b.rows.map(([src, k, name, means, how]) => `<tr><td class="fig">${paper(src, k, '', 'LR')}</td><td><b>${name}</b><br>${means}</td><td>${how}</td></tr>`).join('')}</table></div>`;
     case 'shape': return `<section class="shape">${paper(b.src, kind)}<div class="txt"><h3>${b.name}</h3><p>${b.means}</p>${b.rules.length ? `<ul>${b.rules.map(r => `<li>${r}</li>`).join('')}</ul>` : ''}<div class="drawio"><b>draw.io</b>${b.drawio}</div></div></section>`;
     case 'pair': return `<section class="pair"><h3>${b.title}</h3><div class="two"><figure><span class="tag bad">Źle</span>${paper(b.bad, kind, 'bad')}</figure><figure><span class="tag ok">Dobrze</span>${paper(b.good, kind, 'ok')}</figure></div><p>${b.why}</p></section>`;
-    case 'task': return `<section class="task"><h2>${b.title}</h2><p>${b.html}</p><div class="check"><b>Sprawdź przed oddaniem:</b><ul>${b.check.map(c => `<li>${c}</li>`).join('')}</ul></div>${b.src ? `<details><summary>Pokaż przykładowe rozwiązanie</summary>${paper(b.src, kind)}</details>` : ''}</section>`;
+    case 'task': return `<section class="task"><h2>${b.title}</h2><p>${b.html}</p><div class="check"><b>Kryteria:</b><ul>${b.check.map(c => `<li>${c}</li>`).join('')}</ul></div>${b.src ? `<details><summary>Przykładowe rozwiązanie</summary>${paper(b.src, kind)}</details>` : ''}</section>`;
   }
 }
 
