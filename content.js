@@ -410,14 +410,13 @@ b -> e`, 'Proces z dwoma zadaniami. Diagram czyta się od lewej do prawej.'),
           ]),
           h('BPMN w projektowaniu interakcji'),
           p('W HCI BPMN służy do opisu usługi, z której korzysta użytkownik, np. zwrotu książki albo rejestracji na zajęcia. Na diagramie widać, w których krokach użytkownik czeka na odpowiedź i w których przekazuje dane innemu uczestnikowi.'),
-          note('W zadaniu domowym 4 narysujesz w BPMN czynność, którą modelowaliście diagramem czynności na wybranej stronie.'),
           h('Rysujemy w draw.io'),
           list([
             '<b>Kształty BPMN</b>: kliknij <b>+ Więcej kształtów</b> na dole lewego panelu i zaznacz <i>BPMN</i>. Pojawi się grupa <i>BPMN General</i>.',
             '<b>Najszybciej</b> jest wyszukać kształt po angielskiej nazwie: <i>start event</i>, <i>task</i>, <i>gateway</i>, <i>pool</i>, <i>timer</i>, <i>message</i>.',
             '<b>Linie</b> są na końcu grupy BPMN General: <i>Sequence Flow</i>, <i>Message Flow</i>, <i>Association</i>. Przeciągnij gotową linię zamiast zmieniać domyślną strzałkę.',
           ]),
-          note('Alternatywa: <a href="https://demo.bpmn.io" target="_blank" rel="noopener">demo.bpmn.io</a>, darmowy edytor tylko do BPMN. Typ elementu zmieniasz ikoną klucza, a edytor nie pozwoli połączyć elementów niedozwoloną linią. Do oddania zadań używamy jednak draw.io.'),
+          p('Alternatywa: <a href="https://demo.bpmn.io" target="_blank" rel="noopener">demo.bpmn.io</a>, darmowy edytor tylko do BPMN. Typ elementu zmieniasz ikoną klucza, a edytor nie pozwoli połączyć elementów niedozwoloną linią. Do oddania zadań używamy jednak draw.io.'),
         ],
       },
       {
@@ -508,7 +507,7 @@ q -> e`,
             ['AND (+)', 'wszystkie ścieżki', 'czeka na wszystkie'],
             ['OR (O)', 'jedna lub więcej, według warunków', 'czeka na wszystkie uruchomione'],
           ]),
-          note('Scalaj ścieżki bramką tego samego rodzaju, którą je rozdzieliłeś. Ścieżki rozdzielone przez XOR scalone bramką AND blokują proces: AND czeka na ścieżkę, która nigdy nie nadejdzie.'),
+          p('Scalaj ścieżki bramką tego samego rodzaju, którą je rozdzieliłeś. Ścieżki rozdzielone przez XOR scalone bramką AND blokują proces: AND czeka na ścieżkę, która nigdy nie nadejdzie.'),
         ],
       },
       {
@@ -611,7 +610,7 @@ b -> e2`,
             ['task:receive a "Odbierz zgłoszenie" 0', 'bpmn', 'Zadanie odbioru', 'czeka na wiadomość z innego basenu', 'wyszukaj <i>receive task</i>'],
             ['sub a "Obsłuż płatność" 0', 'bpmn', 'Podproces', 'zadanie złożone z kilku kroków, rozpisanych na osobnym diagramie', 'zadanie z kwadratem i + na dole'],
           ]),
-          note('Zadanie użytkownika oznacza, że człowiek pracuje z interfejsem systemu. Każde takie zadanie to ekran albo formularz do zaprojektowania.'),
+          p('Zadanie użytkownika oznacza, że człowiek pracuje z interfejsem systemu. Każde takie zadanie to ekran albo formularz do zaprojektowania.'),
           shape({ name: 'Dane', src: `task:user a "Wypełnij zgłoszenie" 0
 data d "Zgłoszenie" 1 1
 task:user b "Rozpatrz zgłoszenie" 2
