@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pracownia UML</title>
+<title>Pracownia UML i BPMN</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=JetBrains+Mono:wght@400;500&display=swap">
@@ -54,7 +54,7 @@
   code { font: 14px var(--mono); background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; }
   i { font-style: italic; }
 
-  .paper { background-color: var(--paper); background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px); background-size: 16px 16px; border: 1px solid var(--line); border-radius: 8px; padding: 14px; display: flex; justify-content: center; align-items: center; overflow-x: auto; }
+  .paper { background-color: var(--paper); background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px); background-size: 16px 16px; border: 1px solid var(--line); border-radius: 8px; padding: 14px; display: flex; justify-content: safe center; align-items: center; overflow-x: auto; }
   .paper svg { max-width: 100%; height: auto; }
   .shape .paper { min-height: 120px; }
   figure { margin: 0; display: flex; flex-direction: column; gap: 8px; }
@@ -126,7 +126,7 @@
 </head>
 <body>
 <nav id="nav">
-  <p class="brand">Pracownia UML<small>Human-Computer Interaction</small></p>
+  <p class="brand">Pracownia UML i BPMN<small>Human-Computer Interaction</small></p>
   <div class="progress"><span id="count"></span><div class="bar"><i id="fill"></i></div></div>
   <button id="menu" aria-expanded="false">Spis lekcji</button>
   <div id="toc"></div>
@@ -135,6 +135,7 @@
 <main><article id="page"></article></main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dagre/0.8.5/dagre.min.js"></script>
 <script src="uml.js"></script>
+<script src="bpmn.js"></script>
 <script src="content.js"></script>
 <script>
 const KEY = 'uml-course-v1';
@@ -147,7 +148,7 @@ const html = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace
 const ALL = COURSE.flatMap((m, mi) => m.lessons.map((l, li) => ({ ...l, kind: m.kind, module: m.title, mi, li })));
 const quizzes = L => L.blocks.filter(b => b.t === 'quiz');
 const isDone = L => quizzes(L).length ? quizzes(L).every((q, i) => state.answers[L.id + ':' + i] === q.answer) : !!state.seen[L.id];
-const draw = (src, kind, dir) => { try { return render(parse(src, kind), dir); } catch (e) { console.error(e); return '<p>Nie udało się narysować diagramu.</p>'; } };
+const draw = (src, kind, dir) => { try { return kind === 'bpmn' ? BPMN.render(BPMN.parse(src)) : render(parse(src, kind), dir); } catch (e) { console.error(e); return '<p>Nie udało się narysować diagramu.</p>'; } };
 const paper = (src, kind, cls = '', dir) => `<div class="paper ${cls}">${draw(src, kind, dir)}</div>`;
 
 function block(b, L, qi) {
