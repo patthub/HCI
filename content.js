@@ -389,15 +389,15 @@ Wypozyczenie "*" -- "1" Rower` }),
       {
         id: 'bp-intro', title: 'Po co BPMN',
         blocks: [
-          p('BPMN (Business Process Model and Notation) to notacja do opisywania <b>procesów</b>: kto co robi, w jakiej kolejności, na co czeka i jakie wiadomości wymienia z innymi. Standard prowadzi ta sama organizacja co UML (OMG). Używamy wersji 2.0.'),
-          p('Diagram czynności z UML też pokazuje kroki. BPMN idzie dalej w dwóch kierunkach: pokazuje <b>kilku uczestników</b>, z których każdy ma własny proces (czytelnik, biblioteka, system płatności), i <b>czas</b>: czekanie na odpowiedź, terminy, przypomnienia.'),
+          p('BPMN (Business Process Model and Notation) to notacja do modelowania procesów. Standard, tak jak UML, wydaje organizacja OMG. Obecna wersja to BPMN 2.0.'),
+          p('Diagram BPMN przypomina diagram czynności z UML: też składa się z kroków, decyzji i strzałek. Różnica polega na tym, że każdy uczestnik procesu (np. czytelnik, biblioteka, system płatności) ma na diagramie osobny obszar, a wiadomości między uczestnikami rysuje się osobnym rodzajem linii. BPMN ma też symbole dla oczekiwania i terminów.'),
           fig(`start s "Potrzebna książka" 0
 task a "Wyszukaj książkę w katalogu" 1
 task b "Wypożycz książkę" 2
 end e "Książka wypożyczona" 3
 s -> a
 a -> b
-b -> e`, 'Najprostszy proces: zdarzenie początkowe, dwa zadania, zdarzenie końcowe. Czytamy od lewej do prawej.'),
+b -> e`, 'Proces z dwoma zadaniami. Diagram czyta się od lewej do prawej.'),
           h('Co już znasz z diagramu czynności'),
           table(['Diagram czynności (UML)', 'BPMN'], [
             ['węzeł początkowy (pełne koło)', 'zdarzenie początkowe (okrąg cienką linią)'],
@@ -408,9 +408,9 @@ b -> e`, 'Najprostszy proces: zdarzenie początkowe, dwa zadania, zdarzenie koń
             ['partycje (tory)', 'baseny i tory'],
             ['brak', 'przepływ komunikatów między uczestnikami, zdarzenia czasowe, typy zadań'],
           ]),
-          h('Po co to w HCI'),
-          p('Użytkownik rzadko przechodzi przez jeden ekran. Oddanie książki, reklamacja czy rejestracja na zajęcia to proces, w którym ktoś czeka na e-mail, ktoś zatwierdza wniosek, a coś dzieje się w zewnętrznym systemie. Na diagramie procesu widać miejsca, w których użytkownik czeka, wypełnia te same dane drugi raz albo nie wie, co się dzieje. Tych problemów nie znajdziesz, oglądając pojedyncze ekrany.'),
-          note('Pod koniec modułu weźmiesz czynność, którą modelowaliście diagramem czynności na wybranej stronie, i narysujesz ją w BPMN.'),
+          h('BPMN w projektowaniu interakcji'),
+          p('W HCI BPMN służy do opisu usługi, z której korzysta użytkownik, np. zwrotu książki albo rejestracji na zajęcia. Na diagramie widać, w których krokach użytkownik czeka na odpowiedź i w których przekazuje dane innemu uczestnikowi.'),
+          note('W zadaniu domowym 4 narysujesz w BPMN czynność, którą modelowaliście diagramem czynności na wybranej stronie.'),
           h('Rysujemy w draw.io'),
           list([
             '<b>Kształty BPMN</b>: kliknij <b>+ Więcej kształtów</b> na dole lewego panelu i zaznacz <i>BPMN</i>. Pojawi się grupa <i>BPMN General</i>.',
@@ -423,13 +423,13 @@ b -> e`, 'Najprostszy proces: zdarzenie początkowe, dwa zadania, zdarzenie koń
       {
         id: 'bp-basics', title: 'Zdarzenia, zadania, przepływ',
         blocks: [
-          p('Każdy proces w BPMN zaczyna się zdarzeniem, składa się z zadań połączonych przepływem sekwencji i kończy się zdarzeniem. Tych czterech elementów używa się na każdym diagramie.'),
+          p('Proces w BPMN zaczyna się zdarzeniem początkowym, składa się z zadań połączonych przepływem sekwencji i kończy się zdarzeniem końcowym.'),
           shape({ name: 'Zdarzenie początkowe', src: 'start s "Potrzebna książka" 0',
             means: 'To, co uruchamia proces. Okrąg narysowany cienką linią.',
             rules: ['Nazwa opisuje, co się stało: <i>Potrzebna książka</i>, <i>Zamówienie otrzymane</i>.', 'Proces ma zwykle jedno zdarzenie początkowe. Nic do niego nie wchodzi.'],
             drawio: 'Wyszukaj <i>start event</i>. Podpis wpisz pod okręgiem, nie w środku.' }),
           shape({ name: 'Zadanie', src: 'task t "Wypożycz książkę" 0',
-            means: 'Jedna jednostka pracy, którą ktoś albo coś wykonuje.',
+            means: 'Czynność wykonywana przez człowieka albo system.',
             rules: ['Nazwa jak przy przypadkach użycia: czasownik z dopełnieniem, <i>Wypożycz książkę</i>, <i>Sprawdź dostępność</i>.', 'Zadanie ma jedno wejście i jedno wyjście. Rozgałęzienia robi się bramkami (następna lekcja).'],
             drawio: 'Wyszukaj <i>task</i>. Zaokrąglony prostokąt, tekst w środku.' }),
           shape({ name: 'Przepływ sekwencji', src: `task a "Wyszukaj książkę" 0
@@ -454,7 +454,7 @@ a -> b`,
       {
         id: 'bp-gateways', title: 'Bramki: decyzje i równoległość',
         blocks: [
-          p('Bramka to romb, w którym ścieżka procesu się rozdziela albo łączy. Znak w środku mówi, ile ścieżek pójdzie dalej. Bramka sama nic nie robi: nie sprawdza, nie liczy i nie decyduje. Informację, na podstawie której wybiera się ścieżkę, zbiera zadanie przed nią.'),
+          p('Bramka to romb, w którym ścieżka procesu się rozdziela albo łączy. Znak w środku określa, iloma ścieżkami proces pójdzie dalej. Bramka nie wykonuje pracy: sprawdzenie warunku to osobne zadanie przed bramką.'),
           shape({ name: 'Bramka wykluczająca (XOR)', src: `start s "Potrzebna książka" 0
 task a "Sprawdź dostępność" 1
 xor g "Dostępna?" 2
@@ -500,7 +500,7 @@ b -> q
 c -> q
 q -> e`,
             means: 'Proces idzie <b>jedną albo kilkoma</b> ścieżkami, zależnie od warunków. Czytelnik mógł wybrać e-mail, SMS albo oba.',
-            rules: ['Bramka scalająca czeka na wszystkie ścieżki, które zostały uruchomione.', 'Stosuj ją rzadko. Jeśli da się to wyrazić przez XOR albo AND, wybierz XOR albo AND.'],
+            rules: ['Bramka scalająca czeka na wszystkie ścieżki, które zostały uruchomione.', 'Jeśli wystarczy XOR albo AND, użyj ich zamiast OR.'],
             drawio: 'Wyszukaj <i>inclusive gateway</i>.' }),
           h('Trzy bramki obok siebie'),
           table(['Bramka', 'Przy rozdzieleniu', 'Przy scaleniu'], [
@@ -514,7 +514,7 @@ q -> e`,
       {
         id: 'bp-pools', title: 'Baseny, tory i komunikaty',
         blocks: [
-          p('Do tej pory był jeden proces bez informacji, kto go wykonuje. W BPMN uczestników pokazuje się na dwa sposoby, zależnie od tego, czy należą do tej samej organizacji.'),
+          p('Uczestników procesu pokazuje się jako osobne baseny albo jako tory w jednym basenie, zależnie od tego, czy należą do tej samej organizacji.'),
           shape({ name: 'Basen i tory', src: `pool B "Biblioteka"
 lane "Bibliotekarz"
 task a "Przyjmij zwrot" 0
@@ -532,7 +532,7 @@ task b "Przedłuż wypożyczenie" 1
 s -> b
 a ~> s : prośba`,
             means: 'Linia przerywana z kółkiem na początku i pustym grotem na końcu. Pokazuje wiadomość, którą jeden uczestnik wysyła drugiemu: e-mail, formularz, telefon, list.',
-            rules: ['Łączy <b>tylko</b> różne baseny. Przepływ sekwencji nigdy nie przechodzi między basenami.', 'Proces biblioteki zaczyna się od zdarzenia z kopertą: <i>Prośba otrzymana</i>. Biblioteka nie wie, co czytelnik robił wcześniej. Wie tylko, że dostała wiadomość.'],
+            rules: ['Łączy <b>tylko</b> różne baseny. Przepływ sekwencji nigdy nie przechodzi między basenami.', 'Proces biblioteki zaczyna się zdarzeniem z kopertą (<i>Prośba otrzymana</i>), bo uruchamia go wiadomość od czytelnika.'],
             drawio: 'Linia <i>Message Flow</i> z grupy BPMN General.' }),
           shape({ name: 'Basen jako czarna skrzynka', src: `pool B "Biblioteka"
 task:service a "Pobierz opłatę za kartę" 1
@@ -566,8 +566,8 @@ q -> t
 t -> w
 w -> k
 a ~> r : rezerwacja
-w ~> n : e-mail`, 'Czytelnik czeka między rezerwacją a powiadomieniem. Na diagramie to długi odcinek bez zadań w jego basenie. Ikony w rogach zadań poznasz w następnej lekcji.'),
-          p('Przeczytaj ten diagram na głos: czytelnik rezerwuje książkę w katalogu, co wysyła rezerwację do biblioteki. System dopisuje ją do kolejki. Gdy egzemplarz wróci, bibliotekarz odkłada go na półkę rezerwacji, a system wysyła e-mail. Czytelnik, który czekał na tę wiadomość, idzie po książkę.'),
+w ~> n : e-mail`, 'Proces rezerwacji książki. Ikony w rogach zadań są omówione w następnej lekcji.'),
+          p('Czytelnik rezerwuje książkę w katalogu, a rezerwacja trafia do biblioteki. System dopisuje ją do kolejki. Gdy egzemplarz wróci, bibliotekarz odkłada go na półkę rezerwacji, a system wysyła e-mail. Po otrzymaniu e-maila czytelnik odbiera książkę.'),
         ],
       },
       {
@@ -599,7 +599,7 @@ a -> e1
 t -> b
 b -> e2`,
             means: 'Zdarzenie przyczepione do krawędzi zadania. Gdy nastąpi, zadanie zostaje przerwane i proces idzie ścieżką wychodzącą ze zdarzenia. Tu: jeśli czytelnik nie odbierze książki w 3 dni, rezerwacja przepada.',
-            rules: ['Normalne zakończenie zadania prowadzi zwykłym wyjściem w prawo, przekroczenie czasu ścieżką w dół.', 'Tak modeluje się terminy, limity czasu sesji i wygasające linki.'],
+            rules: ['Normalne zakończenie zadania prowadzi zwykłym wyjściem w prawo, przekroczenie czasu ścieżką w dół.', 'W ten sam sposób modeluje się np. wygasanie sesji albo linku.'],
             drawio: 'Przeciągnij zdarzenie pośrednie na dolną krawędź zadania.' }),
           h('Typy zadań'),
           p('Ikona w lewym górnym rogu mówi, kto albo co wykonuje zadanie. Zadanie bez ikony też jest poprawne.'),
@@ -611,7 +611,7 @@ b -> e2`,
             ['task:receive a "Odbierz zgłoszenie" 0', 'bpmn', 'Zadanie odbioru', 'czeka na wiadomość z innego basenu', 'wyszukaj <i>receive task</i>'],
             ['sub a "Obsłuż płatność" 0', 'bpmn', 'Podproces', 'zadanie złożone z kilku kroków, rozpisanych na osobnym diagramie', 'zadanie z kwadratem i + na dole'],
           ]),
-          note('Zadania użytkownika to miejsca, w których potrzebny jest interfejs. Jeśli policzysz je na diagramie, dostaniesz listę ekranów albo formularzy do zaprojektowania. Zadania usługi dzieją się bez użytkownika, ale często musi on się o ich wyniku dowiedzieć.'),
+          note('Zadanie użytkownika oznacza, że człowiek pracuje z interfejsem systemu. Każde takie zadanie to ekran albo formularz do zaprojektowania.'),
           shape({ name: 'Dane', src: `task:user a "Wypełnij zgłoszenie" 0
 data d "Zgłoszenie" 1 1
 task:user b "Rozpatrz zgłoszenie" 2
@@ -621,7 +621,7 @@ a ..> d
 d ..> b
 b ..> k`,
             means: '<b>Obiekt danych</b> (kartka z zagiętym rogiem) to dokument albo informacja, która powstaje lub jest potrzebna w procesie. <b>Magazyn danych</b> (walec) to miejsce, gdzie dane zostają na dłużej, np. baza katalogu.',
-            rules: ['Łączy się je z zadaniami kropkowaną linią z grotem, który pokazuje, czy zadanie dane czyta, czy zapisuje.', 'Dane są dodatkiem. Rysuj je, gdy coś wyjaśniają, nie przy każdym zadaniu.'],
+            rules: ['Łączy się je z zadaniami kropkowaną linią z grotem, który pokazuje, czy zadanie dane czyta, czy zapisuje.', 'Obiekty danych są opcjonalne. Nie trzeba ich rysować przy każdym zadaniu.'],
             drawio: 'Wyszukaj <i>data object</i> i <i>data store</i>. Linia <i>Association</i>.' }),
         ],
       },
@@ -639,7 +639,7 @@ pool B "Biblioteka"
 start:message s "Prośba otrzymana" 0
 task b "Przedłuż wypożyczenie" 1
 a ~> s
-s -> b`, 'Każdy basen ma własny proces. Biblioteka nie przejmuje sterowania od czytelnika, tylko dostaje od niego wiadomość i sama zaczyna działać.'),
+s -> b`, 'Każdy basen ma własny proces. Między basenami przekazuje się wiadomości, więc proces biblioteki zaczyna się zdarzeniem odebrania prośby.'),
           pair('Bramka, która wykonuje pracę', `xor g "Sprawdź dostępność" 0
 task b "Wypożycz książkę" 1
 task c "Zarezerwuj książkę" 1 1
