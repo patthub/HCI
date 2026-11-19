@@ -30,7 +30,7 @@ const COURSE = [
             '<b>Wygląd linii</b> zmieniasz w panelu <b>Format</b> po prawej (Ctrl+Shift+P, gdy jest ukryty): wzór (ciągła albo przerywana) oraz zakończenia na obu końcach (grot, trójkąt, romb, pełne albo puste).',
           ]),
           note('W UML zakończenie linii zmienia znaczenie. Pusty trójkąt znaczy co innego niż otwarty grot, a linia przerywana co innego niż ciągła. Domyślna strzałka draw.io (pełny grot) nie występuje w żadnej z relacji, które poznamy, więc zawsze ją zmieniaj.'),
-          p('Każdy moduł kończy się ćwiczeniem z przykładowym rozwiązaniem i zadaniem domowym.'),
+          p('Każdy moduł kończy się ćwiczeniem z przykładowym rozwiązaniem.'),
         ],
       },
     ],
@@ -157,7 +157,7 @@ Czytelnik -- (Wypożycz książkę)`, 'Aktor korzysta z systemu z zewnątrz.'),
         ],
       },
       {
-        id: 'uc-practice', title: 'Ćwiczenie i zadanie domowe',
+        id: 'uc-practice', title: 'Ćwiczenie',
         blocks: [
           task({ title: 'Ćwiczenie: kino online', html: 'Widz przegląda repertuar i kupuje bilet. Zakup biletu zawsze wymaga zalogowania. Przy zakupie widz może, ale nie musi, użyć kodu rabatowego. Płatność obsługuje zewnętrzny operator płatności. Pracownik kina dodaje seanse do repertuaru i też musi być zalogowany.',
             check: ['Trzech aktorów, w tym operator płatności po prawej stronie', 'Logowanie połączone z zakupem i dodawaniem seansu przez «include»', 'Kod rabatowy jako «extend» zakupu, grot przy zakupie'],
@@ -178,8 +178,6 @@ P -- (Dodaj seans)
 (Dodaj seans) ..> (Zaloguj się) : <<include>>
 (Użyj kodu rabatowego) ..> (Kup bilet) : <<extend>>
 (Kup bilet) -- OP` }),
-          task({ title: 'Zadanie domowe 1: rezerwacja sal', html: 'Studenci i pracownicy wyszukują wolne sale na wydziale i rezerwują je. Pracownik może dodatkowo założyć rezerwację cykliczną, np. co tydzień przez semestr. Każda rezerwacja wymaga zalogowania przez centralny system uwierzytelniania uczelni (CAS). Przy rezerwacji można, ale nie trzeba, zamówić sprzęt (rzutnik, mikrofon). Administrator zatwierdza rezerwacje i zarządza listą sal.<br><br>Oddaj plik <b>.drawio</b> i eksport <b>PNG</b>.',
-            check: ['Aktorzy to role, CAS jest aktorem zewnętrznym', 'Granica systemu z nazwą, aktorzy na zewnątrz', 'Wspólne przypadki studenta i pracownika pokazane przez generalizację', 'Logowanie jako «include», zamówienie sprzętu jako «extend», groty we właściwą stronę', 'Nazwy przypadków użycia to cele (czasownik + dopełnienie)'] }),
         ],
       },
     ],
@@ -340,7 +338,7 @@ class Egzemplarz {
         ],
       },
       {
-        id: 'cl-practice', title: 'Ćwiczenie i zadanie domowe',
+        id: 'cl-practice', title: 'Ćwiczenie',
         blocks: [
           task({ title: 'Ćwiczenie: rowery miejskie', html: 'Stacja ma nazwę i adres oraz od 5 do 30 stojaków; stojak nie istnieje bez stacji. W stojaku stoi co najwyżej jeden rower. Rower ma numer i stan: sprawny, w naprawie albo wycofany. Rowery są zwykłe albo elektryczne; elektryczny ma dodatkowo poziom baterii. Klient ma dowolnie wiele wypożyczeń. Wypożyczenie dotyczy jednego roweru i ma czas rozpoczęcia i zakończenia.',
             check: ['Kompozycja stacja–stojak z licznością 5..30', 'Rower jako klasa abstrakcyjna z dwiema podklasami', 'Stan roweru jako wyliczenie użyte jako typ atrybutu', 'Liczności przy wszystkich asocjacjach'],
@@ -377,8 +375,6 @@ RowerZwykly --|> Rower
 RowerElektryczny --|> Rower
 Klient "1" -- "*" Wypozyczenie
 Wypozyczenie "*" -- "1" Rower` }),
-          task({ title: 'Zadanie domowe 2: platforma kursów online', html: 'Platforma oferuje kursy. Kurs ma tytuł i opis i składa się z co najmniej jednego modułu; moduł nie istnieje poza kursem. Moduł składa się z lekcji. Każda lekcja jest albo nagraniem wideo (czas trwania w minutach), albo quizem (próg zaliczenia w procentach); innych lekcji nie ma. Kurs prowadzi co najmniej jeden prowadzący, a prowadzący może prowadzić dowolnie wiele kursów. Student zapisuje się na kursy. Dla każdego zapisu przechowujemy datę zapisu i status: aktywny, ukończony albo porzucony.<br><br>Oddaj plik <b>.drawio</b> i eksport <b>PNG</b>.',
-            check: ['Atrybuty z typami, nazwy klas w liczbie pojedynczej', 'Kompozycje kurs–moduł i moduł–lekcja, romb przy całości', 'Lekcja jako klasa abstrakcyjna', 'Zapis jako osobna klasa między studentem a kursem', 'Status jako wyliczenie', 'Liczności przy wszystkich asocjacjach'] }),
         ],
       },
     ],
@@ -625,6 +621,107 @@ b ..> k`,
         ],
       },
       {
+        id: 'bp-events2', title: 'Błędy, sygnały, bramka zdarzeniowa',
+        blocks: [
+          shape({ name: 'Zdarzenie błędu', src: `sub a "Obsłuż płatność" 0
+boundary:error x "Odmowa" @a
+task b "Wydaj bilet" 1
+task c "Pokaż komunikat o odmowie" 1 1
+a -> b
+x -> c`,
+            means: 'Błyskawica. Zdarzenie końcowe błędu kończy podproces z błędem. Zdarzenie brzegowe błędu na podprocesie przechwytuje błąd i kieruje proces na ścieżkę obsługi.',
+            rules: ['Zdarzenie końcowe błędu: błyskawica wypełniona. Zdarzenie brzegowe błędu: błyskawica pusta.', 'Zdarzenie brzegowe błędu zawsze przerywa zadanie.'],
+            drawio: '<i>error</i>, wariant końcowy albo pośredni.' }),
+          shape({ name: 'Zdarzenie końcowe terminujące', src: `and p "" 0
+task a "Przeszukaj katalog lokalny" 1
+task b "Przeszukaj katalog NUKAT" 1 1
+end:terminate e1 "Wynik znaleziony" 2
+end:terminate e2 "Wynik znaleziony" 2 1
+p -> a
+p -> b
+a -> e1
+b -> e2`,
+            means: 'Wypełnione koło w grubym okręgu. Kończy cały proces, łącznie z pozostałymi aktywnymi ścieżkami. Zwykłe zdarzenie końcowe kończy tylko swoją ścieżkę.',
+            rules: ['Przykład: dwa wyszukiwania równoległe; pierwszy znaleziony wynik przerywa drugie wyszukiwanie.'],
+            drawio: '<i>terminate</i>.' }),
+          shape({ name: 'Zdarzenie sygnału', src: `pool D "Dyrekcja biblioteki"
+task a "Ogłoś zamknięcie biblioteki" 0
+end:signal e "Komunikat o zamknięciu" 1
+a -> e
+pool S "System biblioteczny"
+start:signal s "Komunikat o zamknięciu" 1
+task:service b "Przesuń terminy zwrotów" 2
+s -> b`,
+            means: 'Trójkąt. Sygnał jest nadawany do wszystkich procesów, które na niego czekają, bez wskazania odbiorcy. Komunikat ma jednego, określonego odbiorcę.',
+            rules: ['Nadanie: trójkąt wypełniony. Odbiór: trójkąt pusty.', 'Między nadawcą a odbiorcą sygnału nie rysuje się przepływu komunikatów.'],
+            drawio: '<i>signal</i>.' }),
+          shape({ name: 'Zdarzenie brzegowe nieprzerywające', src: `task:user a "Wypełnij wniosek" 0
+nboundary:timer t "2 dni" @a
+end e1 "Wniosek złożony" 1
+task:send b "Wyślij przypomnienie" 1 1
+end e2 "Przypomnienie wysłane" 2 1
+a -> e1
+t -> b
+b -> e2`,
+            means: 'Okręgi linią przerywaną. Zadanie nie zostaje przerwane; ścieżka ze zdarzenia biegnie równolegle. Przykład: przypomnienie po 2 dniach, wniosek nadal można złożyć.',
+            rules: ['Zdarzenie brzegowe przerywające (linia ciągła): zadanie kończy się. Nieprzerywające (linia przerywana): zadanie trwa.'],
+            drawio: 'zdarzenie pośrednie na krawędzi zadania, obrys przerywany (Format → Linia → wzór).' }),
+          shape({ name: 'Bramka oparta na zdarzeniach', src: `task:send a "Wyślij link aktywacyjny" 0
+evgw g "" 1
+event:message m "Link potwierdzony" 2
+event:timer t "24 h" 2 1
+task:service b "Aktywuj konto" 3
+task:service c "Usuń konto" 3 1
+a -> g
+g -> m
+g -> t
+m -> b
+t -> c`,
+            means: 'Romb z pięciokątem w podwójnym okręgu. Ścieżkę wybiera zdarzenie, które wystąpi jako pierwsze.',
+            rules: ['Za bramką: zdarzenia pośrednie odbioru (komunikat, czas, sygnał) albo zadania odbioru.', 'Bramka XOR wybiera ścieżkę na podstawie danych dostępnych w chwili dojścia do bramki. Bramka zdarzeniowa czeka na zdarzenie.'],
+            drawio: '<i>event-based gateway</i>.' }),
+          h('Typy zdarzeń i ich pozycje'),
+          table(['Typ', 'Początkowe', 'Pośrednie', 'Brzegowe', 'Końcowe'], [
+            ['brak typu', 'tak', 'tak (nadanie)', 'nie', 'tak'],
+            ['komunikat', 'tak', 'tak', 'tak', 'tak'],
+            ['czas', 'tak', 'tak', 'tak', 'nie'],
+            ['sygnał', 'tak', 'tak', 'tak', 'tak'],
+            ['błąd', 'tylko w podprocesie zdarzeniowym', 'nie', 'tak', 'tak'],
+            ['terminujące', 'nie', 'nie', 'nie', 'tak'],
+          ]),
+        ],
+      },
+      {
+        id: 'bp-loops', title: 'Pętle i wiele instancji',
+        blocks: [
+          p('Powtórzenia: przepływ zwrotny z bramką XOR albo znacznik na zadaniu.'),
+          shape({ name: 'Pętla z bramką', src: `start s "Rejestracja rozpoczęta" 0
+xor j "" 1
+task:user a "Wypełnij formularz" 2
+task:service b "Sprawdź poprawność danych" 3
+xor g "Dane poprawne?" 4
+end e "Formularz przyjęty" 5
+task c "Wyświetl listę błędów" 4 1
+s -> j
+j -> a
+a -> b
+b -> g
+g -> e : tak
+g -> c : nie
+c -> j`,
+            means: 'Przepływ zwrotny prowadzi do bramki XOR przed zadaniem, które jest powtarzane.',
+            rules: ['Bramka XOR przed powtarzanym zadaniem scala wejście pierwsze z przepływem zwrotnym.', 'Warunek wyjścia z pętli: podpis na bramce rozdzielającej.', 'W analizie HCI pętla oznacza powtórną pracę użytkownika.'],
+            drawio: 'przepływ zwrotny prowadzony pod zadaniami, z załamaniami pod kątem prostym.' }),
+          h('Znaczniki zadań'),
+          lines([
+            ['task:service+loop a "Wysyłaj przypomnienie" 0', 'bpmn', 'Pętla', 'zadanie powtarzane, dopóki spełniony jest warunek', 'znacznik <i>loop</i> (Format → Właściwości kształtu)'],
+            ['task:user+par a "Oceń zgłoszenie" 0', 'bpmn', 'Wiele instancji, równolegle', 'kilka wykonań naraz, np. ocena przez każdego recenzenta', 'trzy pionowe kreski'],
+            ['task:user+seq a "Zatwierdź wniosek" 0', 'bpmn', 'Wiele instancji, kolejno', 'kilka wykonań po kolei, np. podpisy kolejnych osób', 'trzy poziome kreski'],
+          ]),
+          p('Znacznik pętli i przepływ zwrotny opisują to samo zachowanie. Przepływ zwrotny pokazuje warunek i kroki między powtórzeniami; znacznik zajmuje mniej miejsca.'),
+        ],
+      },
+      {
         id: 'bp-mistakes', title: 'Typowe błędy',
         blocks: [
           pair('Przepływ sekwencji między basenami', `pool C "Czytelnik"
@@ -690,6 +787,179 @@ a -> b`, 'Role jednej organizacji należą do jednego procesu: tory jednego base
         ],
       },
       {
+        id: 'bp-style', title: 'Poziomy szczegółowości i konwencje',
+        blocks: [
+          h('Poziomy szczegółowości'),
+          table(['Poziom', 'Cel', 'Elementy'], [
+            ['opisowy', 'komunikacja z osobami spoza IT, ogólny przebieg', 'zdarzenia początkowe i końcowe, zadania, bramki XOR i AND, baseny, tory, przepływ komunikatów'],
+            ['analityczny', 'analiza i projektowanie, obsługa wyjątków', 'dodatkowo zdarzenia pośrednie i brzegowe, typy zadań, dane, podprocesy'],
+            ['wykonywalny', 'automatyzacja w silniku procesów (np. Camunda, Flowable)', 'dodatkowo atrybuty techniczne: warunki, formularze, wywołania usług; poza zakresem kursu'],
+          ]),
+          p('Specyfikacja BPMN 2.0 definiuje odpowiadające im klasy zgodności: Descriptive, Analytic, Common Executable.'),
+          h('As-is i to-be'),
+          p('Model <b>as-is</b>: proces w obecnej postaci, na podstawie obserwacji i wywiadów. Model <b>to-be</b>: proces po zmianie. Porównanie modeli wskazuje usunięte zadania, przekazania między uczestnikami i punkty oczekiwania.'),
+          fig(`pool C "Czytelnik"
+start s "Zbliża się termin zwrotu" 0
+task:manual a "Przynieś książkę do wypożyczalni" 1
+event:message r "Decyzja otrzymana" 3
+end e "Termin przedłużony" 4
+s -> a
+a -> r
+r -> e
+pool B "Biblioteka"
+lane "Bibliotekarz"
+start:message s2 "Prośba zgłoszona" 1
+task:user b "Sprawdź rezerwacje" 2
+task:send c "Przedłuż i poinformuj czytelnika" 3
+end e2 "Wypożyczenie przedłużone" 4
+s2 -> b
+b -> c
+c -> e2
+a ~> s2
+c ~> r`, 'As-is: przedłużenie wypożyczenia przy ladzie. Zadanie ręczne czytelnika, zadania bibliotekarza.'),
+          fig(`pool C "Czytelnik"
+start s "Zbliża się termin zwrotu" 0
+task:user a "Przedłuż w katalogu online" 1
+event:message r "Potwierdzenie otrzymane" 3
+end e "Termin przedłużony" 4
+s -> a
+a -> r
+r -> e
+pool B "Biblioteka"
+lane "System biblioteczny"
+start:message s2 "Prośba zgłoszona" 1
+task:service b "Sprawdź rezerwacje" 2
+task:send c "Przedłuż i wyślij potwierdzenie" 3
+end e2 "Wypożyczenie przedłużone" 4
+s2 -> b
+b -> c
+c -> e2
+a ~> s2
+c ~> r`, 'To-be: przedłużenie online. Zadanie ręczne zastąpione zadaniem użytkownika; zadania bibliotekarza zastąpione zadaniami usługi.'),
+          h('Konwencje'),
+          list([
+            'Kierunek przepływu: od lewej do prawej. Przepływy komunikatów: pionowo.',
+            'Rozmiar diagramu: do ok. 15 zadań. Większe procesy: podział na podprocesy.',
+            'Każdy proces: nazwane zdarzenie początkowe i nazwane zdarzenia końcowe.',
+            'Zdarzenia końcowe rozróżniają wyniki procesu, np. <i>Wniosek przyjęty</i>, <i>Wniosek odrzucony</i>.',
+            'Nazwy zadań: czasownik w trybie rozkazującym z dopełnieniem. Bez nazw ekranów i przycisków.',
+            'Bramka XOR: pytanie zamknięte; linie wychodzące: odpowiedzi.',
+            'Bez krzyżujących się linii, o ile układ na to pozwala.',
+            'Tory tylko dla ról, które wykonują zadania w procesie.',
+          ]),
+        ],
+      },
+      {
+        id: 'bp-hci', title: 'BPMN w analizie interakcji',
+        blocks: [
+          p('Diagram BPMN z basenem użytkownika jako źródło danych do oceny przebiegu usługi.'),
+          h('Wskaźniki'),
+          table(['Wskaźnik', 'Element BPMN', 'Znaczenie'], [
+            ['liczba interakcji', 'zadania użytkownika w basenie użytkownika', 'liczba ekranów i formularzy'],
+            ['przekazania', 'przepływy komunikatów do i z basenu użytkownika', 'punkty kontaktu z organizacją; możliwe opóźnienia'],
+            ['oczekiwanie', 'zdarzenia pośrednie odbioru i zdarzenia czasowe w basenie użytkownika', 'czas bez wpływu użytkownika na postęp'],
+            ['powtórzenia', 'przepływy zwrotne', 'powtórna praca po błędzie'],
+            ['wyniki negatywne', 'zdarzenia końcowe typu <i>Wniosek odrzucony</i>', 'sytuacje wymagające komunikatu o błędzie i dalszej ścieżki'],
+            ['praca ręczna', 'zadania ręczne', 'kandydaci do automatyzacji'],
+          ]),
+          h('BPMN, mapa podróży klienta, service blueprint'),
+          table(['', 'Customer journey map', 'Service blueprint', 'BPMN'], [
+            ['Perspektywa', 'użytkownik', 'użytkownik i organizacja', 'wszyscy uczestnicy procesu'],
+            ['Zawartość', 'etapy, działania, myśli, emocje, punkty kontaktu', 'działania klienta, frontstage, backstage, procesy wsparcia', 'zdarzenia, zadania, bramki, komunikaty, dane'],
+            ['Emocje użytkownika', 'tak', 'zwykle nie', 'nie'],
+            ['Logika przebiegu (decyzje, równoległość, czas)', 'nie', 'w ograniczonym zakresie', 'tak'],
+            ['Standard', 'nie', 'nie (konwencja, Shostack 1984)', 'tak (OMG, ISO/IEC 19510)'],
+          ]),
+          h('Odpowiedniość service blueprint → BPMN'),
+          table(['Service blueprint', 'BPMN'], [
+            ['działania klienta', 'basen użytkownika'],
+            ['linia interakcji', 'przepływy komunikatów między basenem użytkownika a organizacją'],
+            ['frontstage (działania widoczne dla klienta)', 'tor z rolami w kontakcie z klientem'],
+            ['backstage, procesy wsparcia', 'pozostałe tory albo osobne baseny'],
+            ['punkty kontaktu (strona, e-mail, okienko)', 'zadania użytkownika i przepływy komunikatów'],
+          ]),
+        ],
+      },
+      {
+        id: 'bp-examples', title: 'Przykłady',
+        blocks: [
+          h('Rejestracja konta z potwierdzeniem e-mail'),
+          fig(`pool U "Użytkownik"
+start s "Potrzebne konto" 0
+task:user a "Wypełnij formularz rejestracji" 1
+event:message m "Link otrzymany" 3
+task:user k "Potwierdź adres e-mail" 4
+end e "Adres potwierdzony" 5
+s -> a
+a -> m
+m -> k
+k -> e
+pool W "Serwis"
+start:message s2 "Formularz otrzymany" 1
+task:service c "Utwórz nieaktywne konto" 2
+task:send l "Wyślij link aktywacyjny" 3
+evgw g "" 4
+event:message mm "Potwierdzenie otrzymane" 5
+task:service act "Aktywuj konto" 6
+end k1 "Konto aktywne" 7
+event:timer t "24 h" 5 1
+task:service del "Usuń konto" 6 1
+end k2 "Konto usunięte" 7 1
+s2 -> c
+c -> l
+l -> g
+g -> mm
+g -> t
+mm -> act
+act -> k1
+t -> del
+del -> k2
+a ~> s2
+l ~> m
+k ~> mm`, 'Bramka zdarzeniowa: potwierdzenie w ciągu 24 h aktywuje konto, brak potwierdzenia usuwa konto.'),
+          list([
+            'Oczekiwanie użytkownika: zdarzenie <i>Link otrzymany</i>.',
+            'Wynik negatywny <i>Konto usunięte</i> nie ma komunikatu do użytkownika; w modelu to-be: dodanie zadania wysłania informacji.',
+          ]),
+          h('Zwrot towaru w sklepie internetowym'),
+          fig(`pool K "Klient"
+start s "Towar do zwrotu" 0
+task:user a "Zgłoś zwrot w serwisie" 1
+event:message r "Etykieta otrzymana" 3
+task:manual b "Nadaj paczkę" 4
+event:message w "Decyzja otrzymana" 6
+end e "Zwrot zakończony" 7
+s -> a
+a -> r
+r -> b
+b -> w
+w -> e
+pool S "Sklep"
+lane "Obsługa klienta"
+start:message s2 "Zgłoszenie otrzymane" 1
+task:send l "Wyślij etykietę zwrotną" 2
+task:send d "Wyślij decyzję" 6
+end k "Decyzja wysłana" 7
+lane "Magazyn"
+event:message p "Paczka dostarczona" 4
+task:user q "Sprawdź stan towaru" 5
+s2 -> l
+l -> p
+p -> q
+q -> d
+d -> k
+a ~> s2 : zgłoszenie
+l ~> r : etykieta
+b ~> p : paczka
+d ~> w : decyzja`, 'Przepływ komunikatów może przenosić także przedmioty fizyczne (paczka).'),
+          list([
+            'Przekazania klient–sklep: cztery.',
+            'Zadanie ręczne klienta: <i>Nadaj paczkę</i>.',
+            'Najdłuższe oczekiwanie klienta: od nadania paczki do zdarzenia <i>Decyzja otrzymana</i>.',
+          ]),
+        ],
+      },
+      {
         id: 'bp-cheatsheet', title: 'Zestawienie symboli',
         blocks: [
           h('Zdarzenia'),
@@ -703,12 +973,19 @@ a -> b`, 'Role jednej organizacji należą do jednego procesu: tory jednego base
             ['task a "" 0\nboundary:timer t "" @a', 'bpmn', 'Brzegowe czasowe', 'termin, który przerywa zadanie', 'zdarzenie pośrednie na krawędzi zadania'],
             ['end e "" 0', 'bpmn', 'Zdarzenie końcowe', 'kończy ścieżkę procesu', '<i>end event</i>, gruba linia'],
             ['end:message e "" 0', 'bpmn', 'Końcowe komunikatu', 'kończy proces wysłaniem wiadomości', '<i>message end event</i>'],
+            ['end:error e "" 0', 'bpmn', 'Końcowe błędu', 'kończy podproces z błędem', '<i>error end event</i>'],
+            ['task a "" 0\nboundary:error t "" @a', 'bpmn', 'Brzegowe błędu', 'przechwytuje błąd z zadania albo podprocesu', 'zdarzenie pośrednie błędu na krawędzi'],
+            ['end:terminate e "" 0', 'bpmn', 'Końcowe terminujące', 'kończy cały proces', '<i>terminate end event</i>'],
+            ['end:signal e "" 0', 'bpmn', 'Końcowe sygnału', 'nadaje sygnał do wszystkich odbiorców', '<i>signal end event</i>'],
+            ['start:signal e "" 0', 'bpmn', 'Początkowe sygnału', 'proces startuje po odebraniu sygnału', '<i>signal start event</i>'],
+            ['task a "" 0\nnboundary:timer t "" @a', 'bpmn', 'Brzegowe nieprzerywające', 'ścieżka równoległa, zadanie trwa dalej', 'obrys przerywany'],
           ]),
           h('Bramki'),
           lines([
             ['xor g "" 0', 'bpmn', 'XOR', 'dokładnie jedna ścieżka', '<i>exclusive gateway</i>'],
             ['and g "" 0', 'bpmn', 'AND', 'wszystkie ścieżki; scalenie czeka na wszystkie', '<i>parallel gateway</i>'],
             ['or g "" 0', 'bpmn', 'OR', 'jedna lub więcej ścieżek', '<i>inclusive gateway</i>'],
+            ['evgw g "" 0', 'bpmn', 'Zdarzeniowa', 'ścieżkę wybiera pierwsze zdarzenie', '<i>event-based gateway</i>'],
           ]),
           h('Linie'),
           lines([
@@ -727,7 +1004,7 @@ a -> b`, 'Role jednej organizacji należą do jednego procesu: tory jednego base
         ],
       },
       {
-        id: 'bp-practice', title: 'Ćwiczenie i zadania',
+        id: 'bp-practice', title: 'Ćwiczenia',
         blocks: [
           task({ title: 'Ćwiczenie: zakup biletu w kinie online', html: 'Kino online z ćwiczenia do diagramu przypadków użycia. Widz wybiera seans i miejsca, podaje dane karty i zatwierdza zakup. Kino obciąża kartę przez zewnętrznego operatora płatności (proces operatora nieznany). Płatność udana: kino wysyła bilet e-mailem. Płatność nieudana: kino zwalnia zablokowane miejsca i wysyła widzowi informację o błędzie. Widz oczekuje na odpowiedź kina.',
             check: ['Trzy baseny: Widz, Kino online, Operator płatności jako czarna skrzynka', 'Proces kina zaczyna się zdarzeniem komunikatu', 'Między basenami tylko przepływy komunikatów', 'Bramka XOR z pytaniem i podpisanymi wyjściami, osobne zdarzenia końcowe dla obu wyników', 'Zadania widza oznaczone jako zadania użytkownika'],
@@ -763,10 +1040,35 @@ p ~> OP : obciążenie
 OP ~> p : wynik
 t ~> c
 z ~> c` }),
-          task({ title: 'Zadanie domowe 3: proces rezerwacji sali', html: 'Proces jednej rezerwacji w systemie rezerwacji sal z zadania domowego 1. Użytkownik (student albo pracownik) loguje się przez CAS, wyszukuje wolną salę i wysyła prośbę o rezerwację. System zapisuje prośbę i powiadamia administratora. Administrator zatwierdza albo odrzuca prośbę. Jeśli nie zrobi tego w ciągu 2 dni roboczych, system automatycznie ją odrzuca. W każdym przypadku użytkownik otrzymuje e-mail z wynikiem.<br><br>Forma: plik <b>.drawio</b> i eksport <b>PNG</b>.',
-            check: ['Basen użytkownika, basen uczelni z torami System i Administrator, CAS jako czarna skrzynka', 'Termin 2 dni jako zdarzenie brzegowe z zegarem na zadaniu administratora', 'Bramka XOR z pytaniem i podpisanymi wyjściami', 'Między basenami tylko przepływy komunikatów', 'Typy zadań: użytkownika, usługi, wysłania'] }),
-          task({ title: 'Zadanie domowe 4: z diagramu czynności do BPMN', html: 'Czynność z wybranej strony, modelowana wcześniej diagramem czynności, przedstawiona w BPMN. Użytkownik i strona: osobne baseny. Systemy zewnętrzne (płatności, poczta, logowanie przez Google): czarne skrzynki. Pod diagramem trzy zdania: co pokazuje BPMN, czego nie pokazywał diagram czynności, w którym miejscu procesu użytkownik czeka najdłużej.<br><br>Forma: plik <b>.drawio</b>, eksport <b>PNG</b>, wyjściowy diagram czynności.',
-            check: ['Każdy krok z diagramu czynności ma odpowiednik w BPMN albo uzasadnienie, dlaczego go nie ma', 'Komunikaty między użytkownikiem a stroną jako przepływy komunikatów', 'Zadania użytkownika zaznaczone ikoną', 'Oczekiwanie (na e-mail, na zatwierdzenie) pokazane zdarzeniem'] }),
+          task({ title: 'Ćwiczenie: zgłoszenie awarii w akademiku', html: 'Mieszkaniec zgłasza awarię formularzem online. Administrator akademika ocenia pilność. Awaria pilna: przekazanie od razu technikowi. Awaria niepilna: administrator planuje termin naprawy, potem przekazanie technikowi. Technik usuwa awarię. Proces akademika kończy się powiadomieniem mieszkańca.',
+            check: ['Basen Mieszkaniec, basen Akademik z torami Administrator i Technik', 'Ocena pilności jako zadanie przed bramką XOR', 'Ścieżki scalone bramką XOR przed naprawą', 'Zakończenie procesu akademika zdarzeniem końcowym komunikatu'],
+            src: `pool M "Mieszkaniec"
+start s "Awaria w pokoju" 0
+task:user a "Zgłoś awarię" 1
+event:message m "Powiadomienie otrzymane" 6.5
+end e "Awaria usunięta" 7.5
+s -> a
+a -> m
+m -> e
+pool A "Akademik"
+lane "Administrator"
+start:message s2 "Zgłoszenie otrzymane" 1
+task:user o "Oceń pilność" 2
+xor g "Pilne?" 3
+task:user p "Zaplanuj termin naprawy" 4
+lane "Technik"
+xor j "" 5
+task:manual n "Usuń awarię" 6
+end:message em "Mieszkaniec powiadomiony" 7
+s2 -> o
+o -> g
+g -> p : nie
+g -> j : tak
+p -> j
+j -> n
+n -> em
+a ~> s2
+em ~> m` }),
         ],
       },
     ],

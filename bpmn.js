@@ -3,16 +3,18 @@
 //
 //   pool ID "Label"              a participant; a pool with no elements is drawn as a black box
 //   lane "Label"                 a lane inside the last pool
-//   kind[:marker] id "label" col [row]
-//   boundary:timer id "label" @host
+//   kind[:marker][+loop|+par|+seq] id "label" col [row]
+//   boundary:timer id "label" @host        nboundary = non-interrupting boundary event
 //   a -> b : label   sequence flow      a ~> b : label   message flow      a ..> b   data association
 //
-// kinds: start end event boundary task sub xor and or data store
+// kinds: start end event boundary nboundary task sub xor and or evgw data store
 const BPMN = (() => {
   const ID = String.raw`[\p{L}\p{N}_]+`;
-  const MARKERS = { start: ['message', 'timer'], end: ['message'], event: ['message', 'send', 'timer'], boundary: ['timer', 'message'],
-    task: ['user', 'service', 'send', 'receive', 'manual'], sub: [], xor: [], and: [], or: [], data: [], store: [] };
-  const EL = new RegExp(String.raw`^(${Object.keys(MARKERS).join('|')})(?::(\w+))?\s+(${ID})(?:\s+"([^"]*)")?\s+(?:@(${ID})|([\d.]+)(?:\s+([\d.]+))?)$`, 'u');
+  const MARKERS = { start: ['message', 'timer', 'signal'], end: ['message', 'signal', 'error', 'terminate'], event: ['message', 'send', 'timer', 'signal'],
+    boundary: ['timer', 'message', 'error'], nboundary: ['timer', 'message'],
+    task: ['user', 'service', 'send', 'receive', 'manual'], sub: [], xor: [], and: [], or: [], evgw: [], data: [], store: [] };
+  const LOOPS = ['loop', 'par', 'seq'], HOSTED = ['boundary', 'nboundary'];
+  const EL = new RegExp(String.raw`^(${Object.keys(MARKERS).join('|')})(?::(\w+))?(?:\+(\w+))?\s+(${ID})(?:\s+"([^"]*)")?\s+(?:@(${ID})|([\d.]+)(?:\s+([\d.]+))?)$`, 'u');
   const POOL = new RegExp(String.raw`^pool\s+(${ID})(?:\s+"([^"]*)")?$`, 'u');
   const LANE = /^lane\s+"?([^"]+)"?$/u;
   const FLOW = new RegExp(String.raw`^(${ID})\s*(->|~>|\.\.>)\s*(${ID})\s*(?::\s*(.*))?$`, 'u');
@@ -29,11 +31,12 @@ const BPMN = (() => {
       if ((m = line.match(POOL))) { const p = { id: m[1], label: m[2] ?? m[1], lanes: [], isPool: true }; pools.push(p); byId[p.id] = p; return; }
       if ((m = line.match(LANE))) { if (!pools.length) errors.push({ line: no, msg: 'tor poza basenem' }); pool().lanes.push({ label: m[1], els: [] }); return; }
       if ((m = line.match(EL))) {
-        const [, kind, marker, id, label, host, col, row] = m;
+        const [, kind, marker, loop, id, label, host, col, row] = m;
         if (marker && !MARKERS[kind].includes(marker)) errors.push({ line: no, msg: `${kind} nie ma odmiany ${marker}` });
-        if (kind === 'boundary' ? !host : host) errors.push({ line: no, msg: 'tylko boundary stoi na innym elemencie (@id)' });
+        if (loop && !(LOOPS.includes(loop) && (kind === 'task' || kind === 'sub'))) errors.push({ line: no, msg: `zły znacznik ${loop}` });
+        if (HOSTED.includes(kind) ? !host : host) errors.push({ line: no, msg: 'tylko boundary stoi na innym elemencie (@id)' });
         if (byId[id]) errors.push({ line: no, msg: `powtórzony id ${id}` });
-        const e = { kind, marker, id, label: label || '', host, col: +col, row: +(row || 0) };
+        const e = { kind, marker, loop, id, label: label || '', host, col: +col, row: +(row || 0) };
         if (!host) { e.lane = lane(); e.lane.els.push(e); }
         els.push(e); byId[id] = e;
         return;
@@ -59,8 +62,8 @@ const BPMN = (() => {
 
   // ---------- drawing (browser; in node text width is estimated) ----------
   const INK = '#1d2330', COLW = 120, ROWH = 100, STRIP = 30, GAP = 34, BLACKBOX = 56;
-  const SIZE = { task: [49, 32], sub: [49, 32], start: [17, 17], end: [17, 17], event: [17, 17], boundary: [15, 15], xor: [24, 24], and: [24, 24], or: [24, 24], data: [15, 19], store: [21, 17] };
-  const GATE = ['xor', 'and', 'or'];
+  const SIZE = { task: [49, 32], sub: [49, 32], start: [17, 17], end: [17, 17], event: [17, 17], boundary: [15, 15], nboundary: [15, 15], xor: [24, 24], and: [24, 24], or: [24, 24], evgw: [24, 24], data: [15, 19], store: [21, 17] };
+  const GATE = ['xor', 'and', 'or', 'evgw'];
   const f = n => n.toFixed(1);
   const x = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const width = s => typeof tw === 'function' ? tw(s) : s.length * 7; // tw comes from uml.js in the browser
@@ -125,7 +128,7 @@ const BPMN = (() => {
 
     // positions
     placed.forEach(e => { e.cx = X0 + e.col * COLW + COLW / 2; e.cy = e.lane.top + e.row * ROWH + ROWH / 2; [e.hw, e.hh] = SIZE[e.kind]; });
-    m.els.filter(e => e.host).forEach(e => { const h = m.byId[e.host]; e.cx = h.cx + h.hw - 22; e.cy = h.cy + h.hh; [e.hw, e.hh] = SIZE[e.kind]; });
+    m.els.filter(e => e.host).forEach(e => { const h = m.byId[e.host]; e.cx = h.cx + h.hw - 14; e.cy = h.cy + h.hh; [e.hw, e.hh] = SIZE[e.kind]; });
     const side = (e, d) => ({ r: [e.cx + e.hw, e.cy], l: [e.cx - e.hw, e.cy], d: [e.cx, e.cy + e.hh], u: [e.cx, e.cy - e.hh] }[d]);
 
     const seq = (a, b) => {
@@ -137,7 +140,7 @@ const BPMN = (() => {
       }
       if (Math.abs(dx) < 1) return [side(a, v), side(b, vb)];
       if (dx < 0) return [side(a, 'l'), [b.cx, a.cy], side(b, vb)];
-      if (GATE.includes(a.kind) || a.kind === 'boundary') return [side(a, v), [a.cx, b.cy], side(b, 'l')];
+      if (GATE.includes(a.kind) || HOSTED.includes(a.kind)) return [side(a, v), [a.cx, b.cy], side(b, 'l')];
       if (GATE.includes(b.kind)) return [side(a, 'r'), [b.cx, a.cy], side(b, vb)];
       const mx = (a.cx + a.hw + b.cx - b.hw) / 2;
       return [side(a, 'r'), [mx, a.cy], [mx, b.cy], side(b, 'l')];
@@ -182,13 +185,17 @@ const BPMN = (() => {
     // shapes, hosts before the boundary events sitting on them
     [...placed, ...m.els.filter(e => e.host)].forEach(e => {
       const { cx, cy, hw, hh } = e;
-      if (['start', 'end', 'event', 'boundary'].includes(e.kind)) {
-        const thick = { start: 1.4, end: 3.6 }[e.kind] || 1.3;
-        out.push(`<circle cx="${f(cx)}" cy="${f(cy)}" r="${hw}" fill="#fff" stroke="${INK}" stroke-width="${thick}"/>`);
-        if (e.kind === 'event' || e.kind === 'boundary') out.push(`<circle cx="${f(cx)}" cy="${f(cy)}" r="${hw - 3}" fill="none" stroke="${INK}" stroke-width="1.1"/>`);
-        if (e.marker === 'message' || e.marker === 'send') out.push(envelope(cx, cy, hw * 0.95, e.kind === 'end' || e.marker === 'send'));
+      if (['start', 'end', 'event', ...HOSTED].includes(e.kind)) {
+        const thick = { start: 1.4, end: 3.6 }[e.kind] || 1.3, dash = e.kind === 'nboundary' ? ' stroke-dasharray="3 2"' : '';
+        const filled = e.kind === 'end' || e.marker === 'send';
+        out.push(`<circle cx="${f(cx)}" cy="${f(cy)}" r="${hw}" fill="#fff" stroke="${INK}" stroke-width="${thick}"${dash}/>`);
+        if (e.kind === 'event' || HOSTED.includes(e.kind)) out.push(`<circle cx="${f(cx)}" cy="${f(cy)}" r="${hw - 3}" fill="none" stroke="${INK}" stroke-width="1.1"${dash}/>`);
+        if (e.marker === 'message' || e.marker === 'send') out.push(envelope(cx, cy, hw * 0.95, filled));
         if (e.marker === 'timer') out.push(clock(cx, cy, hw - 6));
-        if (e.kind === 'boundary') out.push(`<text x="${f(cx + hw + 4)}" y="${f(cy + hh + 12)}" font-size="12">${x(e.label)}</text>`);
+        if (e.marker === 'signal') out.push(`<path d="M${f(cx)},${f(cy - 8)} L${f(cx + 7)},${f(cy + 5)} L${f(cx - 7)},${f(cy + 5)} z" fill="${filled ? INK : '#fff'}" stroke="${INK}" stroke-width="1.2"/>`);
+        if (e.marker === 'error') out.push(`<path d="M${f(cx - 7)},${f(cy + 7)} L${f(cx - 3)},${f(cy - 6)} L${f(cx + 2)},${f(cy + 1)} L${f(cx + 7)},${f(cy - 7)} L${f(cx + 3)},${f(cy + 6)} L${f(cx - 2)},${f(cy - 1)} z" fill="${filled ? INK : '#fff'}" stroke="${INK}" stroke-width="1.2" stroke-linejoin="round"/>`);
+        if (e.marker === 'terminate') out.push(`<circle cx="${f(cx)}" cy="${f(cy)}" r="${hw - 6}" fill="${INK}"/>`);
+        if (HOSTED.includes(e.kind)) out.push(`<text x="${f(cx + hw + 4)}" y="${f(cy + hh + 12)}" font-size="12">${x(e.label)}</text>`);
         else if (e.under) out.push(label(e.label, cx, cy - hh - 6, 110, 'bottom', 'font-size="12"'));
         else out.push(label(e.label, cx, cy + hh, 110, 'top', 'font-size="12"'));
         maxY = Math.max(maxY, cy + hh + 12 + 15 * wrap(e.label, 110).length);
@@ -197,6 +204,10 @@ const BPMN = (() => {
         out.push(`<rect x="${f(l)}" y="${f(t)}" width="${2 * hw}" height="${2 * hh}" rx="9" fill="#fff" stroke="${INK}" stroke-width="1.3"/>`);
         out.push(label(e.label, cx, cy + (e.marker || e.kind === 'sub' ? 4 : 0), 2 * hw - 10, 'mid', 'font-size="12"'));
         if (e.kind === 'sub') out.push(`<rect x="${f(cx - 6)}" y="${f(cy + hh - 13)}" width="12" height="12" fill="#fff" stroke="${INK}" stroke-width="1.1"/><path d="M${f(cx)},${f(cy + hh - 10)} v6 M${f(cx - 3)},${f(cy + hh - 7)} h6" stroke="${INK}" stroke-width="1.2"/>`);
+        const lx = cx + (e.kind === 'sub' ? -16 : 0), ly = cy + hh - 8;
+        if (e.loop === 'loop') out.push(`<path d="M${f(lx - 3)},${f(ly + 4)} A5,5 0 1 1 ${f(lx + 3)},${f(ly + 4)}" fill="none" stroke="${INK}" stroke-width="1.3"/><path d="M${f(lx - 3)},${f(ly + 4)} l-3,-1 M${f(lx - 3)},${f(ly + 4)} l0,-3" stroke="${INK}" stroke-width="1.3"/>`);
+        if (e.loop === 'par') out.push(`<path d="M${f(lx - 4)},${f(ly - 5)} v10 M${f(lx)},${f(ly - 5)} v10 M${f(lx + 4)},${f(ly - 5)} v10" stroke="${INK}" stroke-width="1.6"/>`);
+        if (e.loop === 'seq') out.push(`<path d="M${f(lx - 5)},${f(ly - 4)} h10 M${f(lx - 5)},${f(ly)} h10 M${f(lx - 5)},${f(ly + 4)} h10" stroke="${INK}" stroke-width="1.6"/>`);
         const ix = l + 11, iy = t + 10;
         if (e.marker === 'user') out.push(`<circle cx="${f(ix)}" cy="${f(iy - 1)}" r="3.3" fill="#fff" stroke="${INK}" stroke-width="1.1"/><path d="M${f(ix - 6)},${f(iy + 8)} q0,-6 6,-6 q6,0 6,6 z" fill="#fff" stroke="${INK}" stroke-width="1.1"/>`);
         if (e.marker === 'service') out.push(`<circle cx="${f(ix)}" cy="${f(iy)}" r="5" fill="#fff" stroke="${INK}" stroke-width="3.2" stroke-dasharray="2.2 1.73"/><circle cx="${f(ix)}" cy="${f(iy)}" r="3.6" fill="#fff" stroke="${INK}" stroke-width="1"/>`);
@@ -206,6 +217,10 @@ const BPMN = (() => {
         out.push(`<path d="M${f(cx)},${f(cy - hh)} L${f(cx + hw)},${f(cy)} L${f(cx)},${f(cy + hh)} L${f(cx - hw)},${f(cy)} z" fill="#fff" stroke="${INK}" stroke-width="1.3"/>`);
         if (e.kind === 'xor') out.push(`<path d="M${f(cx - 7)},${f(cy - 7)} L${f(cx + 7)},${f(cy + 7)} M${f(cx + 7)},${f(cy - 7)} L${f(cx - 7)},${f(cy + 7)}" stroke="${INK}" stroke-width="3"/>`);
         if (e.kind === 'and') out.push(`<path d="M${f(cx)},${f(cy - 10)} V${f(cy + 10)} M${f(cx - 10)},${f(cy)} H${f(cx + 10)}" stroke="${INK}" stroke-width="3"/>`);
+        if (e.kind === 'evgw') {
+          const p = [0, 1, 2, 3, 4].map(k => { const a = -Math.PI / 2 + k * 2 * Math.PI / 5; return f(cx + 5.5 * Math.cos(a)) + ',' + f(cy + 5.5 * Math.sin(a)); }).join(' ');
+          out.push(`<circle cx="${f(cx)}" cy="${f(cy)}" r="11" fill="none" stroke="${INK}" stroke-width="1.1"/><circle cx="${f(cx)}" cy="${f(cy)}" r="8.5" fill="none" stroke="${INK}" stroke-width="1.1"/><polygon points="${p}" fill="none" stroke="${INK}" stroke-width="1.1"/>`);
+        }
         if (e.kind === 'or') out.push(`<circle cx="${f(cx)}" cy="${f(cy)}" r="9" fill="none" stroke="${INK}" stroke-width="2.4"/>`);
         out.push(label(e.label, cx, cy - hh - 7, 150, 'bottom', 'font-size="12"'));
       } else if (e.kind === 'data') {
@@ -226,7 +241,7 @@ const BPMN = (() => {
 <marker id="${mk}open" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M1,1 L11,6 L1,11" fill="none" stroke="${INK}" stroke-width="1.2"/></marker>
 </defs>`;
     const H = maxY + 4;
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="${f(W + 4)}" height="${f(H)}" style="min-width:${f(0.8 * (W + 4))}px" viewBox="0 0 ${f(W + 4)} ${f(H)}" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="${INK}">${defs}${out.join('')}</svg>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${f(W + 4)}" height="${f(H)}" style="min-width:${f(0.7 * (W + 4))}px" viewBox="0 0 ${f(W + 4)} ${f(H)}" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="${INK}">${defs}${out.join('')}</svg>`;
   }
 
   return { parse, lint, render };
